@@ -26,6 +26,4 @@ lint.select = ["E", "F", "I"]
 lint.ignore = []
 
 [dependency-groups]
-dev = [
-    "pytest>=8.4.2",
-]
+dev = ["pytest>=8.4.2", "ruff>=0.14.2"]
