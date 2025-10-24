@@ -1,0 +1,31 @@
+[project]
+name = "lintdata"
+version = "0.1.0"
+description = "A \"linter\" for pandas DataFrames to automate data quality audits."
+readme = "README.md"
+authors = [{ name = "Heet Patel", email = "heetkpatel30@gmail.com" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.13"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = ["pandas>=2.3.3"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+select = ["E", "F", "I"]
+ignore = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
