@@ -36,6 +36,7 @@ class LintAccessor:
 
         all_warnings: List[str] = []
         all_warnings.extend(checks.check_missing_values(self._df))
+        all_warnings.extend(checks.check_duplicate_rows(self._df))
 
         if not all_warnings:
             report_lines.append("No issues found. DataFrame looks good!")
