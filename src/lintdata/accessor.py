@@ -32,11 +32,10 @@ class LintAccessor:
         report_lines.append(f"Shape: {self._df.shape}")
         report_lines.append("\nRunning checks...")
 
-        # Checks will be implemented here in future versions
-
         all_warnings: List[str] = []
         all_warnings.extend(checks.check_missing_values(self._df))
         all_warnings.extend(checks.check_duplicate_rows(self._df))
+        all_warnings.extend(checks.check_mixed_types(self._df))
 
         if not all_warnings:
             report_lines.append("No issues found. DataFrame looks good!")
