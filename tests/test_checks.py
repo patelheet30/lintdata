@@ -54,3 +54,62 @@ def test_check_missing_values_all_missing():
     assert "Column 'b'" in warnings[0]
     assert "3 missing" in warnings[0]
     assert "(100.0%)" in warnings[0]
+
+
+# ==== Tests for check_duplicate_rows ====
+
+
+def test_check_duplicate_rows_no_duplicates():
+    """No duplicate rows present."""
+    df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
+    warnings = checks.check_duplicate_rows(df)
+    assert warnings == []
+
+
+def test_check_duplicate_rows_detects_duplicates():
+    """Core functionality: detects duplicate rows."""
+    df = pd.DataFrame(
+        {
+            "id": [1, 2, 2],
+            "name": ["Alice", "Bob", "Bob"],
+        }
+    )
+    warnings = checks.check_duplicate_rows(df)
+    assert len(warnings) == 1
+    assert "1 duplicate row(s)" in warnings[0] or "1 duplicate" in warnings[0]
+    assert "index: 2" in warnings[0]
+
+
+def test_check_duplicate_rows_empty_dataframe():
+    """Edge case: empty DataFrame should return no warnings."""
+    df = pd.DataFrame(columns=["a", "b"])
+    warnings = checks.check_duplicate_rows(df)
+    assert warnings == []
+
+
+def test_check_duplicate_rows_all_duplicates():
+    """All rows are duplicates except the first one."""
+    df = pd.DataFrame(
+        {
+            "id": [1, 1, 1],
+            "name": ["Alice", "Alice", "Alice"],
+        }
+    )
+    warnings = checks.check_duplicate_rows(df)
+    assert len(warnings) == 1
+    assert "2 duplicate row(s)" in warnings[0] or "2 duplicates" in warnings[0]
+    assert "index: 1, 2" in warnings[0]
+
+
+def test_check_duplicate_rows_multiple_duplicates_sets():
+    """Multiple sets of duplicate rows."""
+    df = pd.DataFrame(
+        {
+            "id": [1, 2, 2, 3, 3, 3],
+            "name": ["Alice", "Bob", "Bob", "Charlie", "Charlie", "Charlie"],
+        }
+    )
+    warnings = checks.check_duplicate_rows(df)
+    assert len(warnings) == 1
+    assert "3 duplicate row(s)" in warnings[0] or "3 duplicates" in warnings[0]
+    assert "index: 2, 4, 5" in warnings[0]
