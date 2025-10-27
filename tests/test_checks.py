@@ -113,3 +113,59 @@ def test_check_duplicate_rows_multiple_duplicates_sets():
     assert len(warnings) == 1
     assert "3 duplicate row(s)" in warnings[0] or "3 duplicates" in warnings[0]
     assert "index: 2, 4, 5" in warnings[0]
+
+
+# ==== Mixed Type Tests ====
+
+
+def test_check_mixed_types_no_mixed_types():
+    df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
+    warnings = checks.check_mixed_types(df)
+    assert warnings == []
+
+
+def test_check_mixed_types_detects_mixed():
+    df = pd.DataFrame(
+        {
+            "price": [10, "20", 30],
+        }
+    )
+    warnings = checks.check_mixed_types(df)
+    assert len(warnings) == 1
+    assert "Column 'price'" in warnings[0]
+    assert "int" in warnings[0] or "int64" in warnings[0]
+    assert "str" in warnings[0] or "object" in warnings[0]
+
+
+def test_check_mixed_types_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_mixed_types(df)
+    assert warnings == []
+
+
+def test_check_mixed_types_with_nan():
+    df = pd.DataFrame(
+        {
+            "value": [1, 2, np.nan, "text"],
+        }
+    )
+    warnings = checks.check_mixed_types(df)
+    assert len(warnings) == 1
+    assert "Column 'value'" in warnings[0]
+    assert "int" in warnings[0] or "int64" in warnings[0]
+    assert "str" in warnings[0] or "object" in warnings[0]
+
+
+def test_check_mixed_types_multiple_columns():
+    df = pd.DataFrame(
+        {
+            "col1": [1, 2, 3],
+            "col2": [1.0, "2.0", 3.0],
+            "col3": ["a", "b", "c"],
+            "col4": [True, False, "True"],
+        }
+    )
+    warnings = checks.check_mixed_types(df)
+    assert len(warnings) == 2
+    assert any("Column 'col2'" in warning for warning in warnings)
+    assert any("Column 'col4'" in warning for warning in warnings)

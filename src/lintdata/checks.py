@@ -11,6 +11,20 @@ import pandas as pd
 
 
 def check_missing_values(df: pd.DataFrame) -> List[str]:
+    """Check for missing values in the DataFrame
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check
+
+    Returns:
+        List[str]: A list of warning messages describing missing values found.
+
+    Example:
+    >>> df = pd.DataFrame({'a': [1, 2, None], 'b': ['x', 'y', 'z']})
+    >>> warnings = check_missing_values(df)
+    >>> print(warnings[0])
+    [Missing Values] Column 'a': 1 missing values (33.3%)
+    """
     warnings: List[str] = []
     missing_info = df.isna().sum()
     missing_cols = missing_info[missing_info > 0]
@@ -44,7 +58,7 @@ def check_duplicate_rows(df: pd.DataFrame) -> List[str]:
     >>> df = pd.DataFrame({'a': [1, 2, 2], 'b': ['x', 'y', 'y']})
     >>> warnings = check_duplicate_rows(df)
     >>> print(warnings[0])
-    ["[Duplicate Rows] Found 1 duplicate row(s) at index: 2"]
+    [Duplicate Rows] Found 1 duplicate row(s) at index: 2
     """
     warnings: List[str] = []
 
@@ -60,5 +74,61 @@ def check_duplicate_rows(df: pd.DataFrame) -> List[str]:
             f"[Duplicate Rows] Found {len(duplicate_indices)} duplicate row(s) "
             f"at index: {indices_str}"
         )
+
+    return warnings
+
+
+def check_mixed_types(df: pd.DataFrame) -> List[str]:
+    """Check for columns containing mixed data types.
+
+    Detects columns where values have different Python types (e.g., integers
+    mixed with strings). Reports the specific types found and their proportions.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+
+    Returns:
+        List[str]: A list of warning messages for mixed data types found with specific
+        type breakdowns.
+
+    Example:
+    >>> df = pd.DataFrame({'a': [1, 'two', 3], 'b': [1.0, 2.0, 3.0]})
+    >>> warnings = check_mixed_types(df)
+    >>> print(warnings[0])
+    [Mixed Types] Column 'a' has mixed types: int (66%), str (33%)
+    """
+    warnings: List[str] = []
+    if df.empty:
+        return warnings
+
+    for col in df.columns:
+        if df[col].isna().all():
+            continue
+
+        non_null_values = df[col].dropna()
+
+        if len(non_null_values) == 0:
+            continue
+
+        type_counts = {}
+        for value in non_null_values:
+            value_type = type(value).__name__
+            type_counts[value_type] = type_counts.get(value_type, 0) + 1
+
+        if len(type_counts) > 1:
+            total = len(non_null_values)
+
+            sorted_types = sorted(type_counts.items(), key=lambda x: x[1], reverse=True)
+
+            type_breakdown = ", ".join(
+                [
+                    f"{type_name} ({count / total * 100:.0f}%)"
+                    for type_name, count in sorted_types
+                ]
+            )
+
+            warnings.append(
+                f"[Mixed Types] Column '{col}' has mixed types: {type_breakdown}"
+            )
 
     return warnings
