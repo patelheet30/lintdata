@@ -1,6 +1,6 @@
 [project]
 name = "lintdata"
-version = "0.1.0"
+version = "0.2.0"
 description = "A \"linter\" for pandas DataFrames to automate data quality audits."
 readme = "README.md"
 authors = [{ name = "Heet Patel", email = "heetkpatel30@gmail.com" }]
