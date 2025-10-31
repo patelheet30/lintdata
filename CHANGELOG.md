@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-10-31
+
+### Added
+
+- `check_outliers`: New check to identify outliers using the IQR method.
+
 ## [Released]
 
 ## [0.3.0] - 2025-10-31
