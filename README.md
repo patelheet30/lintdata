@@ -13,7 +13,7 @@
 ## v0.3.0
 
 - [x] Constant Columns Check
-- [ ] Unique Values Check
+- [x] Unique Values Check
 
 ## v0.4.0
 
