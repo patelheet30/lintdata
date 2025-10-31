@@ -367,3 +367,41 @@ def test_check_unique_columns_multiple_unique_columns():
     assert len(warnings) == 2
     assert any("Column 'a'" in warning for warning in warnings)
     assert any("Column 'b'" in warning for warning in warnings)
+
+
+# ==== Outliers Tests ====
+
+
+def test_check_outliers_no_outliers():
+    df = pd.DataFrame({"a": [10, 12, 11, 13, 12], "b": [20, 22, 21, 19, 20]})
+    warnings = checks.check_outliers(df)
+    assert warnings == []
+
+
+def test_check_outliers_with_outliers():
+    df = pd.DataFrame({"a": [10, 12, 11, 13, 100], "b": [20, 22, 21, 19, 20]})
+    warnings = checks.check_outliers(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "potential outlier(s)" in warnings[0]
+
+
+def test_check_outliers_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_outliers(df)
+    assert warnings == []
+
+
+def test_check_outliers_custom_threshold():
+    df = pd.DataFrame(
+        {"a": [10, 15, 20, 25, 30, 35, 150], "b": [10, 20, 30, 40, 50, 80, 110]}
+    )
+    warnings = checks.check_outliers(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    warnings_low = checks.check_outliers(df, threshold=0.9)
+    assert len(warnings_low) == 2
+    assert "Column 'a'" in warnings_low[0]
+    assert "potential outlier(s)" in warnings_low[0]
+    assert "Column 'b'" in warnings_low[1]
+    assert "potential outlier(s)" in warnings_low[1]

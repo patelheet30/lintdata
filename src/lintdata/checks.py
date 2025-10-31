@@ -5,8 +5,9 @@ Each check is implemented as a function that takes a pandas DataFrame
 and returns a list of issues found. If no issues are found, an empty list is returned.
 """
 
-from typing import List
+from typing import List, Optional
 
+import numpy as np
 import pandas as pd
 
 
@@ -223,8 +224,33 @@ def check_constant_columns(df: pd.DataFrame) -> List[str]:
     return warnings
 
 
-def check_unique_columns(df: pd.DataFrame, threshold: float = 0.95) -> List[str]:
+def check_unique_columns(
+    df: pd.DataFrame, threshold: Optional[float] = 0.95
+) -> List[str]:
+    """Check for columns with a high proportion of unique values.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        threshold (float, optional): The unique value proportion threshold.
+        Defaults to 0.95.
+
+    Returns:
+        List[str]: A list of warning messages for columns exceeding
+        the unique value threshold.
+
+    Example:
+    >>> df = pd.DataFrame({'a': [1, 2, 3, 4, 5]})
+    >>> warnings = check_unique_columns(df, threshold=0.8)
+    >>> print(warnings[0])
+    [Unique Column] Column 'a' is 100.0% unique
+    """
     warnings: List[str] = []
+
+    if threshold:
+        if not (0 < threshold <= 1):
+            raise ValueError("Uniqueness threshold must be between 0 and 1.")
+    else:
+        threshold = 0.95
 
     if df.empty:
         return warnings
@@ -242,5 +268,54 @@ def check_unique_columns(df: pd.DataFrame, threshold: float = 0.95) -> List[str]
         if unique_ratio >= threshold:
             percent = unique_ratio * 100
             warnings.append(f"[Unique Column] Column '{col}' is {percent:.1f}% unique")
+
+    return warnings
+
+
+def check_outliers(
+    df: pd.DataFrame, method: Optional[str] = "iqr", threshold: Optional[float] = 1.5
+) -> List[str]:
+    warnings: List[str] = []
+
+    if method != "iqr":
+        raise ValueError(
+            "Currently, only 'iqr' method is supported for outlier detection."
+        )
+
+    if threshold:
+        if threshold <= 0:
+            raise ValueError("Threshold must be a positive number.")
+    else:
+        threshold = 1.5
+
+    if df.empty:
+        return warnings
+
+    numeric_columns = df.select_dtypes(include=[np.number]).columns
+
+    for col in numeric_columns:
+        non_null_values = df[col].dropna()
+
+        if len(non_null_values) == 0:
+            continue
+
+        q1 = non_null_values.quantile(0.25)
+        q3 = non_null_values.quantile(0.75)
+        iqr = q3 - q1
+
+        if iqr == 0:
+            continue
+
+        lower_bound = q1 - threshold * iqr
+        upper_bound = q3 + threshold * iqr
+
+        outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)]
+        outlier_count = len(outliers)
+
+        if outlier_count > 0:
+            warnings.append(
+                f"[Outliers] Column '{col}': {outlier_count} potential outlier(s) "
+                f"detected ({method} method)."
+            )
 
     return warnings
