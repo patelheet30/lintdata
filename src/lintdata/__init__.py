@@ -2,7 +2,7 @@
 LintData: A 'linter' for pandas DataFrames to automate data quality audits.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 try:
     from . import accessor  # noqa: F401
