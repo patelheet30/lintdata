@@ -305,3 +305,65 @@ def test_check_constant_columns_boolean_constant():
     assert len(warnings) == 1
     assert "Column 'a'" in warnings[0]
     assert "only one unique value: True" in warnings[0]
+
+
+# ==== Unique Columns Test ====
+
+
+def test_check_unique_columns_detects_uniques():
+    df = pd.DataFrame({"a": [1, 2, 3, 4, 5]})
+    warnings = checks.check_unique_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "100.0% unique" in warnings[0]
+
+
+def test_check_unique_columns_custom_threshold():
+    df = pd.DataFrame(
+        {
+            "a": [1, 2, 3, 4, 5, 5, 5, 5, 5, 5],
+            "b": ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"],
+        }
+    )
+    warnings = checks.check_unique_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'b'" in warnings[0]
+
+    warnings_low = checks.check_unique_columns(df, threshold=0.4)
+    assert len(warnings_low) == 2
+
+
+def test_check_unique_columns_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_unique_columns(df)
+    assert warnings == []
+
+
+def test_check_unique_columns_with_nan():
+    df = pd.DataFrame({"a": [1, 2, 3, np.nan, np.nan]})
+    warnings = checks.check_unique_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "100.0% unique" in warnings[0]
+
+
+def test_check_unique_columns_single_row():
+    df = pd.DataFrame({"a": [42]})
+    warnings = checks.check_unique_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+
+
+def test_check_unique_columns_all_nan():
+    df = pd.DataFrame({"a": [np.nan, np.nan, np.nan], "b": [1, 2, 3]})
+    warnings = checks.check_unique_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'b'" in warnings[0]
+
+
+def test_check_unique_columns_multiple_unique_columns():
+    df = pd.DataFrame({"a": [1, 2, 3, 4], "b": ["x", "y", "z", "w"], "c": [1, 1, 1, 1]})
+    warnings = checks.check_unique_columns(df)
+    assert len(warnings) == 2
+    assert any("Column 'a'" in warning for warning in warnings)
+    assert any("Column 'b'" in warning for warning in warnings)

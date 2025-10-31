@@ -221,3 +221,26 @@ def check_constant_columns(df: pd.DataFrame) -> List[str]:
                 f" has only one unique value: {display_value}."
             )
     return warnings
+
+
+def check_unique_columns(df: pd.DataFrame, threshold: float = 0.95) -> List[str]:
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    for col in df.columns:
+        non_null_values = df[col].dropna()
+
+        if len(non_null_values) == 0:
+            continue
+
+        num_unique = non_null_values.nunique()
+        total_non_null = len(non_null_values)
+        unique_ratio = num_unique / total_non_null
+
+        if unique_ratio >= threshold:
+            percent = unique_ratio * 100
+            warnings.append(f"[Unique Column] Column '{col}' is {percent:.1f}% unique")
+
+    return warnings
