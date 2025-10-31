@@ -39,6 +39,7 @@ class LintAccessor:
         all_warnings.extend(checks.check_whitespace(self._df))
         all_warnings.extend(checks.check_constant_columns(self._df))
         all_warnings.extend(checks.check_unique_columns(self._df))
+        all_warnings.extend(checks.check_outliers(self._df))
 
         if not all_warnings:
             report_lines.append("No issues found. DataFrame looks good!")
