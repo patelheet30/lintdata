@@ -132,3 +132,46 @@ def check_mixed_types(df: pd.DataFrame) -> List[str]:
             )
 
     return warnings
+
+
+def check_whitespace(df: pd.DataFrame) -> List[str]:
+    """Detects string values that have leading or trailing spaces,
+    which can cause issues in data analysis and matching operations.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+
+    Returns:
+        List[str]: A list of warning messages for columns with leading or
+        trailing whitespace.
+
+    Example:
+    >>> df = pd.DataFrame({'a': [' x', 'y ', ' z ']})
+    >>> warnings = check_whitespace(df)
+    >>> print(warnings[0])
+    [Whitespace] Column 'a' has 3 value(s) with leading or trailing whitespace.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    string_columns = df.select_dtypes(include=["object"]).columns
+
+    for col in string_columns:
+        if df[col].isna().all():
+            continue
+
+        non_null_values = df[col].dropna()
+
+        has_whitespace = (
+            non_null_values.astype(str) != non_null_values.astype(str).str.strip()
+        )
+        whitespace_count = has_whitespace.sum()
+
+        if whitespace_count > 0:
+            warnings.append(
+                f"[Whitespace] Column '{col}' has {whitespace_count} value(s) "
+                f"with leading or trailing whitespace."
+            )
+    return warnings

@@ -169,3 +169,69 @@ def test_check_mixed_types_multiple_columns():
     assert len(warnings) == 2
     assert any("Column 'col2'" in warning for warning in warnings)
     assert any("Column 'col4'" in warning for warning in warnings)
+
+
+# ==== Whitespace Tests ====
+
+
+def test_check_whitespace_no_whitespace():
+    df = pd.DataFrame({"a": ["x", "y", "z"], "b": ["foo", "bar", "baz"]})
+    warnings = checks.check_whitespace(df)
+    assert warnings == []
+
+
+def test_check_whitespace_detects_leading():
+    df = pd.DataFrame({"a": [" x", "y", "z"]})
+    warnings = checks.check_whitespace(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "1 value(s)" in warnings[0]
+
+
+def test_check_whitespace_detects_trailing():
+    df = pd.DataFrame({"a": ["x ", "y", "z"]})
+    warnings = checks.check_whitespace(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "1 value(s)" in warnings[0]
+
+
+def test_check_whitespace_detects_both():
+    df = pd.DataFrame({"a": [" x ", "y", "z"]})
+    warnings = checks.check_whitespace(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "1 value(s)" in warnings[0]
+
+
+def test_check_whitespace_multiple_columns():
+    df = pd.DataFrame(
+        {
+            "a": [" x", "y", "z"],
+            "b": ["foo", " bar", "baz "],
+        }
+    )
+    warnings = checks.check_whitespace(df)
+    assert len(warnings) == 2
+    assert any("Column 'a'" in warning for warning in warnings)
+    assert any("Column 'b'" in warning for warning in warnings)
+
+
+def test_check_whitespace_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_whitespace(df)
+    assert warnings == []
+
+
+def test_check_whitespace_non_string_column():
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    warnings = checks.check_whitespace(df)
+    assert warnings == []
+
+
+def test_check_whitespace_nan_values():
+    df = pd.DataFrame({"a": [" x", np.nan, "z "]})
+    warnings = checks.check_whitespace(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "2 value(s)" in warnings[0]
