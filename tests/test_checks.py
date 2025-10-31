@@ -235,3 +235,73 @@ def test_check_whitespace_nan_values():
     assert len(warnings) == 1
     assert "Column 'a'" in warnings[0]
     assert "2 value(s)" in warnings[0]
+
+
+# === Check Constant Columns Tests ====
+
+
+def test_check_constant_columns_no_constants():
+    df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
+    warnings = checks.check_constant_columns(df)
+    assert warnings == []
+
+
+def test_check_constant_columns_detects_constants():
+    df = pd.DataFrame({"a": ["x", "x", "x"]})
+    warnings = checks.check_constant_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "only one unique value: 'x'" in warnings[0]
+
+
+def test_check_constant_columns_numeric_constants():
+    df = pd.DataFrame({"a": [3.14, 3.14, 3.14], "b": [1, 2, 3]})
+    warnings = checks.check_constant_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "only one unique value: 3.14" in warnings[0]
+
+
+def test_check_constant_columns_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_constant_columns(df)
+    assert warnings == []
+
+
+def test_check_constant_columns_single_row():
+    df = pd.DataFrame({"a": [42]})
+    warnings = checks.check_constant_columns(df)
+    assert len(warnings) == 1
+
+
+def test_check_constant_columns_with_nan():
+    df = pd.DataFrame({"a": [np.nan, np.nan, np.nan]})
+    warnings = checks.check_constant_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+
+
+def test_check_constant_columns_mixed_with_nan_and_constant():
+    df = pd.DataFrame({"a": [5, 5, np.nan, 5]})
+    warnings = checks.check_constant_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "only one unique value: 5" in warnings[0]
+
+
+def test_check_constant_columns_multiple_constants():
+    df = pd.DataFrame(
+        {"a": ["constant", "constant", "constant"], "b": [42, 42, 42], "c": [1, 2, 3]}
+    )
+    warnings = checks.check_constant_columns(df)
+    assert len(warnings) == 2
+    assert any("Column 'a'" in warning for warning in warnings)
+    assert any("Column 'b'" in warning for warning in warnings)
+
+
+def test_check_constant_columns_boolean_constant():
+    df = pd.DataFrame({"a": [True, True, True, True]})
+    warnings = checks.check_constant_columns(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "only one unique value: True" in warnings[0]

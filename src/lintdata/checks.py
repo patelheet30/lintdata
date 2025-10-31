@@ -175,3 +175,49 @@ def check_whitespace(df: pd.DataFrame) -> List[str]:
                 f"with leading or trailing whitespace."
             )
     return warnings
+
+
+def check_constant_columns(df: pd.DataFrame) -> List[str]:
+    """Check for columns where all values are the same (zero variance).
+
+    Identifies columns with only one unique value (excluding NaN), which are often
+    redundant for analysin/modelling.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+
+    Returns:
+        List[str]: A list of warning messages for constant columns found.
+
+    Example:
+    >>> df = pd.DataFrame({'a': [1, 1, 1]})
+    >>> warnings = check_constant_columns(df)
+    >>> print(warnings[0])
+    [Constant Column] Column 'a' has only one unique value: 1.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    for col in df.columns:
+        unique_values = df[col].dropna().unique()
+
+        if len(unique_values) == 0:
+            warnings.append(
+                f"[Constant Column] Column '{col}' contains only missing values."
+            )
+
+        elif len(unique_values) == 1:
+            constant_value = unique_values[0]
+
+            if isinstance(constant_value, str):
+                display_value = f"'{constant_value}'"
+            else:
+                display_value = str(constant_value)
+
+            warnings.append(
+                f"[Constant Column] Column '{col}'"
+                f" has only one unique value: {display_value}."
+            )
+    return warnings
