@@ -29,9 +29,7 @@ def test_check_missing_values_one_column_missing():
 
 def test_check_missing_values_multiple_columns_missing():
     """Test detection and reporting for multiple columns."""
-    df = pd.DataFrame(
-        {"a": [1, np.nan, np.nan, 4], "b": ["w", "x", "y", "z"], "c": [np.nan, 2, 3, 4]}
-    )
+    df = pd.DataFrame({"a": [1, np.nan, np.nan, 4], "b": ["w", "x", "y", "z"], "c": [np.nan, 2, 3, 4]})
     warnings = checks.check_missing_values(df)
 
     assert len(warnings) == 2
@@ -290,9 +288,7 @@ def test_check_constant_columns_mixed_with_nan_and_constant():
 
 
 def test_check_constant_columns_multiple_constants():
-    df = pd.DataFrame(
-        {"a": ["constant", "constant", "constant"], "b": [42, 42, 42], "c": [1, 2, 3]}
-    )
+    df = pd.DataFrame({"a": ["constant", "constant", "constant"], "b": [42, 42, 42], "c": [1, 2, 3]})
     warnings = checks.check_constant_columns(df)
     assert len(warnings) == 2
     assert any("Column 'a'" in warning for warning in warnings)
@@ -393,9 +389,7 @@ def test_check_outliers_empty_dataframe():
 
 
 def test_check_outliers_custom_threshold():
-    df = pd.DataFrame(
-        {"a": [10, 15, 20, 25, 30, 35, 150], "b": [10, 20, 30, 40, 50, 80, 110]}
-    )
+    df = pd.DataFrame({"a": [10, 15, 20, 25, 30, 35, 150], "b": [10, 20, 30, 40, 50, 80, 110]})
     warnings = checks.check_outliers(df)
     assert len(warnings) == 1
     assert "Column 'a'" in warnings[0]
@@ -405,3 +399,34 @@ def test_check_outliers_custom_threshold():
     assert "potential outlier(s)" in warnings_low[0]
     assert "Column 'b'" in warnings_low[1]
     assert "potential outlier(s)" in warnings_low[1]
+
+
+# ==== Missing Patterns Tests ====
+
+
+def test_check_missing_patterns_no_pattern():
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    warnings = checks.check_missing_patterns(df)
+    assert warnings == []
+
+
+def test_check_missing_patterns_detects_pattern():
+    df = pd.DataFrame(
+        {
+            "income": [50000, np.nan, 60000, np.nan],
+            "job": ["Engineer", np.nan, "Doctor", np.nan],
+            "age": [25, 26, 27, 28],
+        }
+    )
+
+    warnings = checks.check_missing_patterns(df)
+    assert len(warnings) == 1
+    assert "income" in warnings[0]
+    assert "job" in warnings[0]
+    assert "identical missing rows" in warnings[0].lower() or "same rows" in warnings[0].lower()
+
+
+def test_check_missing_patterns_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_missing_patterns(df)
+    assert warnings == []

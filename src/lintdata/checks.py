@@ -1,10 +1,3 @@
-"""
-A module containing all data quality checks for LintData.
-
-Each check is implemented as a function that takes a pandas DataFrame
-and returns a list of issues found. If no issues are found, an empty list is returned.
-"""
-
 from typing import List, Optional
 
 import numpy as np
@@ -35,8 +28,7 @@ def check_missing_values(df: pd.DataFrame) -> List[str]:
         for col, count in missing_cols.items():
             percent = (count / total_rows) * 100
             warnings.append(
-                f"[Missing Values] Column '{col}': {count} missing values "
-                f"({percent:.1f}%)"
+                f"[Missing Values] Column '{col}': {count} missing values ({percent:.1f}%)"
             )
 
     return warnings
@@ -72,8 +64,7 @@ def check_duplicate_rows(df: pd.DataFrame) -> List[str]:
     if len(duplicate_indices) > 0:
         indices_str = ", ".join(map(str, duplicate_indices))
         warnings.append(
-            f"[Duplicate Rows] Found {len(duplicate_indices)} duplicate row(s) "
-            f"at index: {indices_str}"
+            f"[Duplicate Rows] Found {len(duplicate_indices)} duplicate row(s) at index: {indices_str}"
         )
 
     return warnings
@@ -90,7 +81,7 @@ def check_mixed_types(df: pd.DataFrame) -> List[str]:
 
     Returns:
         List[str]: A list of warning messages for mixed data types found with specific
-        type breakdowns.
+                    type breakdowns.
 
     Example:
     >>> df = pd.DataFrame({'a': [1, 'two', 3], 'b': [1.0, 2.0, 3.0]})
@@ -144,7 +135,7 @@ def check_whitespace(df: pd.DataFrame) -> List[str]:
 
     Returns:
         List[str]: A list of warning messages for columns with leading or
-        trailing whitespace.
+                    trailing whitespace.
 
     Example:
     >>> df = pd.DataFrame({'a': [' x', 'y ', ' z ']})
@@ -172,8 +163,7 @@ def check_whitespace(df: pd.DataFrame) -> List[str]:
 
         if whitespace_count > 0:
             warnings.append(
-                f"[Whitespace] Column '{col}' has {whitespace_count} value(s) "
-                f"with leading or trailing whitespace."
+                f"[Whitespace] Column '{col}' has {whitespace_count} value(s) with leading or trailing whitespace."
             )
     return warnings
 
@@ -212,14 +202,14 @@ def check_constant_columns(df: pd.DataFrame) -> List[str]:
         elif len(unique_values) == 1:
             constant_value = unique_values[0]
 
-            if isinstance(constant_value, str):
-                display_value = f"'{constant_value}'"
-            else:
-                display_value = str(constant_value)
+            display_value = (
+                f"'{constant_value}'"
+                if isinstance(constant_value, str)
+                else str(constant_value)
+            )
 
             warnings.append(
-                f"[Constant Column] Column '{col}'"
-                f" has only one unique value: {display_value}."
+                f"[Constant Column] Column '{col}' has only one unique value: {display_value}."
             )
     return warnings
 
@@ -232,11 +222,11 @@ def check_unique_columns(
     Args:
         df (pd.DataFrame): The pandas DataFrame to check.
         threshold (float, optional): The unique value proportion threshold.
-        Defaults to 0.95.
+                                        Defaults to 0.95.
 
     Returns:
         List[str]: A list of warning messages for columns exceeding
-        the unique value threshold.
+                    the unique value threshold.
 
     Example:
     >>> df = pd.DataFrame({'a': [1, 2, 3, 4, 5]})
@@ -275,9 +265,33 @@ def check_unique_columns(
 def check_outliers(
     df: pd.DataFrame, method: Optional[str] = "iqr", threshold: Optional[float] = 1.5
 ) -> List[str]:
+    """Check for outliers using different methods.
+
+    Provides a threshold value that sets trigger for outliers. Currently
+    supports IQR method.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        method (Optional[str], optional): The outlier detection method to use.
+                                            Defaults to "iqr".
+        threshold (Optional[float], optional): The threshold for detecting outliers.
+                                                Defaults to 1.5.
+
+    Raises:
+        ValueError (Method): If the method is not supported.
+        ValueError (Threshold): If the threshold is not a positive number.
+
+    Returns:
+        List[str]: A list of warning messages for columns with detected outliers.
+    Example:
+    >>> df = pd.DataFrame({'a': [1, 2, 3, 100, 5]})
+    >>> warnings = check_outliers(df)
+    >>> print(warnings[0])
+    [Outliers] Column 'a': 1 potential outlier(s) detected (iqr method).
+    """
     warnings: List[str] = []
 
-    if method != "iqr":
+    if method and method.lower() != "iqr":
         raise ValueError(
             "Currently, only 'iqr' method is supported for outlier detection."
         )
@@ -314,8 +328,62 @@ def check_outliers(
 
         if outlier_count > 0:
             warnings.append(
-                f"[Outliers] Column '{col}': {outlier_count} potential outlier(s) "
-                f"detected ({method} method)."
+                f"[Outliers] Column '{col}': {outlier_count} potential outlier(s) detected ({method} method)."
             )
 
+    return warnings
+
+
+def check_missing_patterns(df: pd.DataFrame, threshold: float = 0.9) -> List[str]:
+    """Detects patterns in missing data across columns.
+
+    Identifies when multiple columns have missing values in the same rows,
+    which may indicate systematic missingness (e.g., related fields that are
+    filled out together or not at all.)
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        threshold (float, optional): The threshold for detecting missing patterns.
+                                        Defaults to 0.9.
+
+    Returns:
+        List[str]: A list of warning messages for columns with detected missing patterns.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    cols_with_missing = df.columns[df.isna().any()].tolist()
+
+    if len(cols_with_missing) < 2:
+        return warnings
+
+    checked_pairs = set()
+
+    for i, col1 in enumerate(cols_with_missing):
+        for col2 in cols_with_missing[i + 1 :]:
+            pair_key = tuple(sorted([col1, col2]))
+            if pair_key in checked_pairs:
+                continue
+            checked_pairs.add(pair_key)
+
+            missing_col1 = df[col1].isna()
+            missing_col2 = df[col2].isna()
+
+            both_missing = (missing_col1 & missing_col2).sum()
+
+            total_missing_col1 = missing_col1.sum()
+            total_missing_col2 = missing_col2.sum()
+
+            if total_missing_col1 == 0 or total_missing_col2 == 0:
+                continue
+
+            overlap_ratio1 = both_missing / total_missing_col1
+            overlap_ratio2 = both_missing / total_missing_col2
+
+            if overlap_ratio1 >= threshold and overlap_ratio2 >= threshold:
+                warnings.append(
+                    f"[Missing Patterns] Columns '{col1}' and '{col2}' identical missing rows (likely related)"
+                )
     return warnings
