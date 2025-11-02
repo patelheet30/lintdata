@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 - `check_outliers`: New check to identify outliers using the IQR method.
 - `check_missing_patterns`: New check to detect common missing value patterns in DataFrames.
+- `check_case_consistency`: New check to identify inconsistencies in string casing within columns.
 
 ## [0.3.0] - 2025-10-31
 

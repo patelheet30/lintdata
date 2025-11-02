@@ -18,8 +18,8 @@
 ## v0.4.0
 
 - [x] Outlier Detection Check (IQR Method)
-- [ ] Missing Patterns Check
-- [ ] Case Consistency Check
+- [x] Missing Patterns Check
+- [x] Case Consistency Check
 
 ## v0.5.0
 
