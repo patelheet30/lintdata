@@ -27,9 +27,7 @@ def check_missing_values(df: pd.DataFrame) -> List[str]:
         total_rows = len(df)
         for col, count in missing_cols.items():
             percent = (count / total_rows) * 100
-            warnings.append(
-                f"[Missing Values] Column '{col}': {count} missing values ({percent:.1f}%)"
-            )
+            warnings.append(f"[Missing Values] Column '{col}': {count} missing values ({percent:.1f}%)")
 
     return warnings
 
@@ -63,9 +61,7 @@ def check_duplicate_rows(df: pd.DataFrame) -> List[str]:
 
     if len(duplicate_indices) > 0:
         indices_str = ", ".join(map(str, duplicate_indices))
-        warnings.append(
-            f"[Duplicate Rows] Found {len(duplicate_indices)} duplicate row(s) at index: {indices_str}"
-        )
+        warnings.append(f"[Duplicate Rows] Found {len(duplicate_indices)} duplicate row(s) at index: {indices_str}")
 
     return warnings
 
@@ -113,15 +109,10 @@ def check_mixed_types(df: pd.DataFrame) -> List[str]:
             sorted_types = sorted(type_counts.items(), key=lambda x: x[1], reverse=True)
 
             type_breakdown = ", ".join(
-                [
-                    f"{type_name} ({count / total * 100:.0f}%)"
-                    for type_name, count in sorted_types
-                ]
+                [f"{type_name} ({count / total * 100:.0f}%)" for type_name, count in sorted_types]
             )
 
-            warnings.append(
-                f"[Mixed Types] Column '{col}' has mixed types: {type_breakdown}"
-            )
+            warnings.append(f"[Mixed Types] Column '{col}' has mixed types: {type_breakdown}")
 
     return warnings
 
@@ -156,9 +147,7 @@ def check_whitespace(df: pd.DataFrame) -> List[str]:
 
         non_null_values = df[col].dropna()
 
-        has_whitespace = (
-            non_null_values.astype(str) != non_null_values.astype(str).str.strip()
-        )
+        has_whitespace = non_null_values.astype(str) != non_null_values.astype(str).str.strip()
         whitespace_count = has_whitespace.sum()
 
         if whitespace_count > 0:
@@ -195,28 +184,18 @@ def check_constant_columns(df: pd.DataFrame) -> List[str]:
         unique_values = df[col].dropna().unique()
 
         if len(unique_values) == 0:
-            warnings.append(
-                f"[Constant Column] Column '{col}' contains only missing values."
-            )
+            warnings.append(f"[Constant Column] Column '{col}' contains only missing values.")
 
         elif len(unique_values) == 1:
             constant_value = unique_values[0]
 
-            display_value = (
-                f"'{constant_value}'"
-                if isinstance(constant_value, str)
-                else str(constant_value)
-            )
+            display_value = f"'{constant_value}'" if isinstance(constant_value, str) else str(constant_value)
 
-            warnings.append(
-                f"[Constant Column] Column '{col}' has only one unique value: {display_value}."
-            )
+            warnings.append(f"[Constant Column] Column '{col}' has only one unique value: {display_value}.")
     return warnings
 
 
-def check_unique_columns(
-    df: pd.DataFrame, threshold: Optional[float] = 0.95
-) -> List[str]:
+def check_unique_columns(df: pd.DataFrame, threshold: Optional[float] = 0.95) -> List[str]:
     """Check for columns with a high proportion of unique values.
 
     Args:
@@ -262,9 +241,7 @@ def check_unique_columns(
     return warnings
 
 
-def check_outliers(
-    df: pd.DataFrame, method: Optional[str] = "iqr", threshold: Optional[float] = 1.5
-) -> List[str]:
+def check_outliers(df: pd.DataFrame, method: Optional[str] = "iqr", threshold: Optional[float] = 1.5) -> List[str]:
     """Check for outliers using different methods.
 
     Provides a threshold value that sets trigger for outliers. Currently
@@ -292,9 +269,7 @@ def check_outliers(
     warnings: List[str] = []
 
     if method and method.lower() != "iqr":
-        raise ValueError(
-            "Currently, only 'iqr' method is supported for outlier detection."
-        )
+        raise ValueError("Currently, only 'iqr' method is supported for outlier detection.")
 
     if threshold:
         if threshold <= 0:
