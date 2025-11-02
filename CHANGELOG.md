@@ -4,13 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.4.0] - 2025-10-31
+## [0.4.0] - 2025-10-31 - 2025-11-02
 
 ### Added
 
 - `check_outliers`: New check to identify outliers using the IQR method.
-
-## [Released]
+- `check_missing_patterns`: New check to detect common missing value patterns in DataFrames.
 
 ## [0.3.0] - 2025-10-31
 
