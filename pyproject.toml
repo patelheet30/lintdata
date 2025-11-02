@@ -21,9 +21,10 @@ dependencies = ["pandas>=2.3.3"]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.ruff]
-lint.select = ["E", "F", "I"]
-lint.ignore = []
-
 [dependency-groups]
 dev = ["pytest>=8.4.2", "ruff>=0.14.2"]
+
+[tool.ruff]
+lint.select = ["E", "F", "I", "N", "Q", "RSE", "SIM", "RUF"]
+lint.ignore = ["E501"]
+line-length = 120

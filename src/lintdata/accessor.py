@@ -8,9 +8,13 @@ import pandas as pd
 
 from . import checks
 
+__all__ = ["LintAccessor"]
+
 
 @pd.api.extensions.register_dataframe_accessor("lint")
 class LintAccessor:
+    """An Accessor for pandas DataFrames to run data quality checks."""
+
     def __init__(self, pandas_obj: pd.DataFrame) -> None:
         self._validate(pandas_obj)
         self._df = pandas_obj
@@ -18,9 +22,7 @@ class LintAccessor:
     @staticmethod
     def _validate(obj: pd.DataFrame) -> None:
         if not isinstance(obj, pd.DataFrame):
-            raise AttributeError(
-                "LintData accessor can only be used with pandas DataFrames."
-            )
+            raise AttributeError("LintData accessor can only be used with pandas DataFrames.")
 
     def report(self) -> str:
         report_lines = ["--- LintData Quality Report ---"]
