@@ -423,10 +423,41 @@ def test_check_missing_patterns_detects_pattern():
     assert len(warnings) == 1
     assert "income" in warnings[0]
     assert "job" in warnings[0]
-    assert "identical missing rows" in warnings[0].lower() or "same rows" in warnings[0].lower()
+    assert "identical missing rows" in warnings[0].lower()
 
 
 def test_check_missing_patterns_empty_dataframe():
     df = pd.DataFrame()
     warnings = checks.check_missing_patterns(df)
     assert warnings == []
+
+
+# ==== Case Consistency Tests ====
+
+
+def test_check_case_consistency_no_issues():
+    df = pd.DataFrame({"a": ["Apple", "Banana", "Cherry"], "b": ["Dog", "Elephant", "Frog"]})
+    warnings = checks.check_case_consistency(df)
+    assert warnings == []
+
+
+def test_check_case_consistency_detects_issues():
+    df = pd.DataFrame({"category": ["apple", "APPLE", "Apple", "Banana"]})
+    warnings = checks.check_case_consistency(df)
+    assert len(warnings) == 1
+    assert "category" in warnings[0]
+    assert "mixed case" in warnings[0].lower()
+
+
+def test_check_case_consistency_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_case_consistency(df)
+    assert warnings == []
+
+
+def test_check_case_consistency_multiple_columns():
+    df = pd.DataFrame({"fruit": ["apple", "APPLE", "Apple", "Banana"], "animal": ["dog", "Dog", "DOG", "cat"]})
+    warnings = checks.check_case_consistency(df)
+    assert len(warnings) == 2
+    assert any("fruit" in warning for warning in warnings)
+    assert any("animal" in warning for warning in warnings)

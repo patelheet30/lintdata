@@ -323,6 +323,12 @@ def check_missing_patterns(df: pd.DataFrame, threshold: float = 0.9) -> List[str
 
     Returns:
         List[str]: A list of warning messages for columns with detected missing patterns.
+
+    Example:
+    >>> df = pd.DataFrame({'age': [25, None, 30, None], 'income': [50000, None, 60000, None]})
+    >>> warnings = check_missing_patterns(df, threshold=0.8)
+    >>> print(warnings[0])
+    [Missing Patterns] Columns 'age' and 'income' identical missing rows (likely related).
     """
     warnings: List[str] = []
 
@@ -361,4 +367,67 @@ def check_missing_patterns(df: pd.DataFrame, threshold: float = 0.9) -> List[str
                 warnings.append(
                     f"[Missing Patterns] Columns '{col1}' and '{col2}' identical missing rows (likely related)"
                 )
+    return warnings
+
+
+def check_case_consistency(df: pd.DataFrame, min_unique: int = 2) -> List[str]:
+    """Check for inconsistent casing in string columns.
+
+    Detects columns where the same logical value appears with different casing (e.g., "Active", "active", "ACTIVE"). This is common
+    in categorical data and can cause issues in analysis and grouping operations.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to analyse
+        min_unique (int, optional): Minimum number of unique values for a column to be checked. Columns with fewer unique values are skipped as
+                                    they're likely boolean-like. Defaults to 2.
+
+    Returns:
+        List[str]: A list of warning messages for columns with inconsistent casing.
+
+    Example:
+    >>> df = pd.DataFrame({'status': ['Active', 'active', 'Inactive', 'ACTIVE']})
+    >>> warnings = check_case_consistency(df)
+    >>> print(warnings[0])
+    [Case Consistency] Column 'status': mixed case detected (e.g., 'Active', 'active', 'ACTIVE')
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    string_cols = df.select_dtypes(include=["object"]).columns
+
+    for col in string_cols:
+        non_null_values = df[col].dropna()
+        if len(non_null_values) == 0:
+            continue
+
+        str_values = non_null_values.astype(str)
+
+        unique_values = str_values.unique()
+
+        lowercase_values = str_values.str.lower()
+        unique_lowercase = lowercase_values.unique()
+
+        if len(unique_values) < min_unique:
+            continue
+
+        if len(unique_values) > len(unique_lowercase):
+            case_variants = {}
+            for val in unique_values:
+                lower_val = val.lower()
+                if lower_val not in case_variants:
+                    case_variants[lower_val] = []
+                case_variants[lower_val].append(val)
+
+            examples = []
+            for lower_val, variants in case_variants.items():
+                if len(variants) > 1:
+                    examples = sorted(variants)[:3]
+                    break
+
+            examples_str = ", ".join([f"'{ex}'" for ex in examples])
+
+            warnings.append(f"[Case Consistency] Column '{col}': mixed case detected (e.g., {examples_str})")
+
     return warnings
