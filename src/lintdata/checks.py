@@ -508,3 +508,42 @@ def check_skewness(df: pd.DataFrame, threshold: float = 1.0) -> List[str]:
             )
 
     return warnings
+
+
+def check_duplicate_columns(df: pd.DataFrame) -> List[str]:
+    """Check for columns with identical values (reduntant columns).
+
+    Identifies pairs of columns that contain exactly the same data, which are often redundant and can be removed
+    to simplify the dataset.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+
+    Returns:
+        List[str]: A list of warning messages for duplicate columns pairs.
+
+    Example:
+    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [4, 5, 6]})
+    >>> warnings = check_duplicate_columns(df)
+    >>> print(warnings[0])
+    [Duplicate Columns] Columns 'a' and 'b' are identical.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    checked_pairs = set()
+
+    for i, col1 in enumerate(df.columns):
+        for col2 in df.columns[i + 1 :]:
+            pair_key = tuple(sorted([col1, col2]))
+            if pair_key in checked_pairs:
+                continue
+
+            checked_pairs.add(pair_key)
+
+            if df[col1].equals(df[col2]):
+                sorted_cols = sorted([col1, col2])
+                warnings.append(f"[Duplicate Columns] Columns '{sorted_cols[0]}' and '{sorted_cols[1]}' are identical.")
+    return warnings

@@ -574,3 +574,58 @@ def test_check_skewness_with_custom_thresholds():
     assert len(warnings_low) == 1
     assert "Column 'a'" in warnings_low[0]
     assert "right-skewed" in warnings_low[0].lower()
+
+
+# ==== Duplicate columns tests ====
+
+
+def test_check_duplicate_columns_no_duplicates():
+    df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
+    warnings = checks.check_duplicate_columns(df)
+    assert warnings == []
+
+
+def test_check_duplicate_columns_detects_duplicates():
+    df = pd.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "name": ["Alice", "Bob", "Charlie"],
+            "name_dup": ["Alice", "Bob", "Charlie"],
+        }
+    )
+    warnings = checks.check_duplicate_columns(df)
+    assert len(warnings) == 1
+    assert "Columns 'name' and 'name_dup'" in warnings[0]
+    assert "are identical" in warnings[0]
+
+
+def test_check_duplicate_columns_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_duplicate_columns(df)
+    assert warnings == []
+
+
+def test_check_duplicate_columns_multiple_duplicates():
+    df = pd.DataFrame(
+        {
+            "col1": [1, 2, 3],
+            "col2": ["a", "b", "c"],
+            "col1_dup": [1, 2, 3],
+            "col2_dup": ["a", "b", "c"],
+        }
+    )
+    warnings = checks.check_duplicate_columns(df)
+    assert len(warnings) == 2
+    assert any("Columns 'col1' and 'col1_dup'" in warning for warning in warnings)
+    assert any("Columns 'col2' and 'col2_dup'" in warning for warning in warnings)
+
+
+def test_check_duplicate_columns_duplicates_with_different_dtypes():
+    df = pd.DataFrame(
+        {
+            "col1": [1, 2, 3],
+            "col2": [1.0, 2.0, 3.0],
+        }
+    )
+    warnings = checks.check_duplicate_columns(df)
+    assert warnings == []
