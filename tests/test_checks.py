@@ -522,3 +522,55 @@ def test_check_cardinality_all_nan_values():
     df = pd.DataFrame({"a": [np.nan] * 10})
     warnings = checks.check_cardinality(df)
     assert warnings == []
+
+
+# ==== Skewness Tests ====
+
+
+def test_check_skewness_no_skewness():
+    np.random.seed(42)
+    df = pd.DataFrame({"a": np.random.normal(50, 10, 1000)})
+    warnings = checks.check_skewness(df)
+    assert warnings == []
+
+
+def test_check_skewness_detects_right_skewness():
+    df = pd.DataFrame({"a": [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 100]})
+    warnings = checks.check_skewness(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "right-skewed" in warnings[0].lower()
+
+
+def test_check_skewness_detects_left_skewness():
+    df = pd.DataFrame({"a": [100, 95, 90, 85, 80, 75, 70, 10]})
+    warnings = checks.check_skewness(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "left-skewed" in warnings[0].lower()
+
+
+def test_check_skewness_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_skewness(df)
+    assert warnings == []
+
+
+def test_check_skewness_with_nan():
+    df = pd.DataFrame({"a": [1, 2, 3, 4, 5, np.nan, np.nan, 100]})
+    warnings = checks.check_skewness(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "right-skewed" in warnings[0].lower()
+
+
+def test_check_skewness_with_custom_thresholds():
+    df = pd.DataFrame({"a": [1, 2, 3, 4, 5, 6, 7, 8, 9, 20]})
+
+    warnings_high = checks.check_skewness(df, threshold=2.0)
+    assert warnings_high == []
+
+    warnings_low = checks.check_skewness(df, threshold=0.5)
+    assert len(warnings_low) == 1
+    assert "Column 'a'" in warnings_low[0]
+    assert "right-skewed" in warnings_low[0].lower()

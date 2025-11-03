@@ -480,3 +480,31 @@ def check_cardinality(df: pd.DataFrame, high_threshold: int = 50, low_threshold:
                 warnings.append(f"[Low Cardinality] Column '{col}' has only {num_unique} unique values.")
 
     return warnings
+
+
+def check_skewness(df: pd.DataFrame, threshold: float = 1.0) -> List[str]:
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if threshold and threshold <= 0:
+        raise ValueError("Threshold must be a positive number.")
+
+    numeric_columns = df.select_dtypes(include=[np.number]).columns
+
+    for col in numeric_columns:
+        non_null_values = df[col].dropna()
+
+        if len(non_null_values) == 0:
+            continue
+
+        skewness = non_null_values.skew()
+
+        if abs(skewness) > threshold:  # type: ignore
+            direction = "right-skewed" if skewness > 0 else "left-skewed"  # type: ignore
+            warnings.append(
+                f"[Skewness] Column '{col}' is highly {direction} (skewness={skewness:.1f}). Consider log transformation."
+            )
+
+    return warnings
