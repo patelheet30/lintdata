@@ -23,7 +23,7 @@
 
 ## v0.5.0
 
-- [ ] Cardinality Check
+- [x] Cardinality Check
 - [ ] Skewness Check
 - [ ] Duplicate Columns Check
 - [ ] Data type consistency Check

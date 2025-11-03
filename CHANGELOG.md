@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-11-03
+
+### Added
+
+- `check_cardinality`: New check to identify columns with high cardinality.
+
 ## [0.4.0] - 2025-10-31 - 2025-11-02
 
 ### Added
