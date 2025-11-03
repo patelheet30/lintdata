@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `check_cardinality`: New check to identify columns with high cardinality.
+- `check_skewness`: New check to assess skewness in numerical columns.
 
 ## [0.4.0] - 2025-10-31 - 2025-11-02
 
