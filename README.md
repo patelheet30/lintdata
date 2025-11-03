@@ -25,7 +25,7 @@
 
 - [x] Cardinality Check
 - [x] Skewness Check
-- [ ] Duplicate Columns Check
+- [x] Duplicate Columns Check
 - [ ] Data type consistency Check
 
 At this point, the library will be feature-complete for most data quality auditing needs.
