@@ -431,3 +431,52 @@ def check_case_consistency(df: pd.DataFrame, min_unique: int = 2) -> List[str]:
             warnings.append(f"[Case Consistency] Column '{col}': mixed case detected (e.g., {examples_str})")
 
     return warnings
+
+
+def check_cardinality(df: pd.DataFrame, high_threshold: int = 50, low_threshold: int = 2) -> List[str]:
+    """Check for columns with unusually high or low cardinality.
+
+    Identifies categorical columns with too many unique valies (high cardinality, potentially an ID column) or too few
+    unique values (lower cardinality, potentially a constant or near-constant column (boolean-like)).
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        high_threshold (int, optional): The maximum number of unique values for a column to be considered low cardinality. Defaults to 50.
+        low_threshold (int, optional): The minimum number of unique values for a column to be considered high cardinality. Defaults to 2.
+
+    Returns:
+        List[str]: A list of warning messages for columns with unusual cardinality.
+
+    Example:
+    >>> df = pd.DataFrame({'id': range(100), 'status': ['active'] * 100})
+    >>> warnings = check_cardinality(df, high_threshold=80, low_threshold=5)
+    >>> print(warnings[0])
+    [High Cardinality] Column 'id' has 100 unique values (100.0% unique)
+    >>> print(warnings[1])
+    [Low Cardinality] Column 'status' has only 1 unique value.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    for col in df.columns:
+        non_null_values = df[col].dropna()
+
+        if len(non_null_values) == 0:
+            continue
+
+        num_unique = non_null_values.nunique()
+        total_non_null = len(non_null_values)
+        unique_ratio = num_unique / total_non_null
+
+        if num_unique > high_threshold:
+            percent = unique_ratio * 100
+            warnings.append(f"[High Cardinality] Column '{col}' has {num_unique} unique values ({percent:.1f}% unique)")
+        elif num_unique < low_threshold:
+            if num_unique == 1:
+                warnings.append(f"[Low Cardinality] Column '{col}' has only 1 unique value.")
+            else:
+                warnings.append(f"[Low Cardinality] Column '{col}' has only {num_unique} unique values.")
+
+    return warnings

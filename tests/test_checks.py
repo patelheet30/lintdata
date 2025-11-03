@@ -461,3 +461,64 @@ def test_check_case_consistency_multiple_columns():
     assert len(warnings) == 2
     assert any("fruit" in warning for warning in warnings)
     assert any("animal" in warning for warning in warnings)
+
+
+# ==== Cardinality Tests ====
+
+
+def test_check_cardinality_no_issues():
+    df = pd.DataFrame({"a": [1, 2, 3, 4, 5], "b": ["x", "y", "z", "w", "v"]})
+    warnings = checks.check_cardinality(df)
+    assert warnings == []
+
+
+def test_check_cardinality_detects_high_cardinality():
+    df = pd.DataFrame({"a": list(range(100)), "b": ["x", "y", "z", "w", "v"] * 20})
+    warnings = checks.check_cardinality(df)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "High Cardinality" in warnings[0]
+    assert "100.0% unique" in warnings[0]
+    assert "100 unique values" in warnings[0]
+
+
+def test_check_cardinality_low_cardinality():
+    df = pd.DataFrame({"status": ["active"] * 100})
+    warnings = checks.check_cardinality(df)
+    assert len(warnings) == 1
+    assert "Low Cardinality" in warnings[0]
+    assert "1 unique value" in warnings[0]
+    assert "status" in warnings[0]
+
+
+def test_check_cardinality_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_cardinality(df)
+    assert warnings == []
+
+
+def test_check_cardinality_multiple_columns():
+    df = pd.DataFrame({"high_card": list(range(100)), "low_card": ["A"] * 100, "medium_card": ["A", "B"] * 50})
+    warnings = checks.check_cardinality(df)
+    assert len(warnings) == 2
+    assert any("high_card" in warning for warning in warnings if "High Cardinality" in warning)
+    assert any("low_card" in warning for warning in warnings if "Low Cardinality" in warning)
+
+
+def test_check_cardinality_custom_thresholds():
+    df = pd.DataFrame({"a": list(range(30)), "b": ["x", "y", "z"] * 10})
+    warnings = checks.check_cardinality(df, high_threshold=25, low_threshold=2)
+    assert len(warnings) == 1
+    assert "Column 'a'" in warnings[0]
+    assert "High Cardinality" in warnings[0]
+
+    warnings_low = checks.check_cardinality(df, high_threshold=40, low_threshold=4)
+    assert len(warnings_low) == 1
+    assert "Column 'b'" in warnings_low[0]
+    assert "Low Cardinality" in warnings_low[0]
+
+
+def test_check_cardinality_all_nan_values():
+    df = pd.DataFrame({"a": [np.nan] * 10})
+    warnings = checks.check_cardinality(df)
+    assert warnings == []
