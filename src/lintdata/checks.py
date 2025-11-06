@@ -547,3 +547,95 @@ def check_duplicate_columns(df: pd.DataFrame) -> List[str]:
                 sorted_cols = sorted([col1, col2])
                 warnings.append(f"[Duplicate Columns] Columns '{sorted_cols[0]}' and '{sorted_cols[1]}' are identical.")
     return warnings
+
+
+def check_data_type_consistency(df: pd.DataFrame) -> List[str]:
+    """Check if column data types match expected patterns based on column names.
+
+    Uses heuristics to identify columns that may have incorrect data types based on commin naming patterns.
+    For example, "columns" with 'date' in the name should be datetime, 'age' or 'count' should be numeric, etc.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+
+    Returns:
+        List[str]: A list of warning messages for data type inconsistencies.
+
+    Example:
+    >>> df = pd.DataFrame({'age': ['25', '30', '35']})
+    >>> warnings = check_data_type_consistency(df)
+    >>> print(warnings[0])
+    [Type Warning] Column 'age' is stored as object, consider numeric type.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    numeric_patterns = [
+        "age",
+        "count",
+        "number",
+        "num",
+        "quantity",
+        "qty",
+        "amount",
+        "price",
+        "total",
+        "cost",
+        "value",
+        "sum",
+        "average",
+        "avg",
+        "mean",
+        "score",
+        "rating",
+        "percent",
+        "percentage",
+        "proportion",
+        "rate",
+        "ratio",
+    ]
+
+    datetime_patterns = [
+        "date",
+        "time",
+        "timestamp",
+        "datetime",
+        "created",
+        "updated",
+        "modified",
+        "birth",
+        "dob",
+        "year",
+        "month",
+    ]
+
+    boolean_patterns = ["is_", "has_", "flag", "status", "active", "enabled", "disabled"]
+
+    for col in df.columns:
+        col_lower = col.lower()
+        col_dtype = df[col].dtype
+
+        if any(pattern in col_lower for pattern in numeric_patterns) and (
+            col_dtype == "object" or col_dtype.name == "object"
+        ):
+            non_null_values = df[col].dropna()
+            if len(non_null_values) > 0:
+                try:
+                    pd.to_numeric(non_null_values.astype(str), errors="coerce")
+                    warnings.append(f"[Type Warning] Column '{col}' is stored as object, consider numeric type.")
+                except Exception:
+                    pass
+
+        elif any(pattern in col_lower for pattern in datetime_patterns) and (
+            col_dtype != "datetime64[ns]" and not pd.api.types.is_datetime64_any_dtype(df[col])
+        ):
+            warnings.append(f"[Type Warning] Column '{col}' is stored as {col_dtype}, consider datetime type.")
+
+        elif any(col_lower.startswith(pattern) for pattern in boolean_patterns) and col_dtype != "bool":
+            unique_vals = df[col].dropna().nunique()
+            if unique_vals <= 2 and len(df[col].dropna()) > 0:
+                warnings.append(f"[Type Warning] Column '{col}' is stored as {col_dtype}, consider boolean type.")
+
+    return warnings

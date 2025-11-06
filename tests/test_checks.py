@@ -629,3 +629,88 @@ def test_check_duplicate_columns_duplicates_with_different_dtypes():
     )
     warnings = checks.check_duplicate_columns(df)
     assert warnings == []
+
+
+# ==== Data Type Consistency Tests ====
+
+
+def test_check_data_type_consistency_no_issues():
+    df = pd.DataFrame(
+        {
+            "age": [25, 30, 22],
+            "salary": [50000.0, 60000.0, 55000.0],
+        }
+    )
+    warnings = checks.check_data_type_consistency(df)
+    assert warnings == []
+
+
+def test_check_data_type_consistency_detects_numeric_issues():
+    df = pd.DataFrame(
+        {
+            "price": [10, "20", 30],
+        }
+    )
+    warnings = checks.check_data_type_consistency(df)
+    assert len(warnings) == 1
+    assert "Column 'price'" in warnings[0]
+    assert "numeric type" in warnings[0].lower()
+
+
+def test_check_data_type_consistency_detects_datetime_issues():
+    df = pd.DataFrame(
+        {
+            "start_date": ["2020-01-01", "2020-02-01", "not_a_date"],
+        }
+    )
+    warnings = checks.check_data_type_consistency(df)
+    assert len(warnings) == 1
+    assert "Column 'start_date'" in warnings[0]
+    assert "datetime type" in warnings[0].lower()
+
+
+def test_check_data_type_consistency_detects_boolean_issues():
+    df = pd.DataFrame(
+        {
+            "is_active": ["yes", "no", "no", "yes"],
+        }
+    )
+    warnings = checks.check_data_type_consistency(df)
+    assert len(warnings) == 1
+    assert "Column 'is_active'" in warnings[0]
+    assert "boolean type" in warnings[0].lower()
+
+
+def test_check_data_type_consistency_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_data_type_consistency(df)
+    assert warnings == []
+
+
+def test_check_data_type_consistency_multiple_issues():
+    df = pd.DataFrame(
+        {
+            "price": [10, "20", 30],
+            "start_date": ["2020-01-01", "2020-02-01", "not_a_date"],
+            "is_active": ["yes", "no", "no"],
+        }
+    )
+    warnings = checks.check_data_type_consistency(df)
+    assert len(warnings) == 3
+    assert any("Column 'price'" in warning for warning in warnings)
+    assert any("Column 'start_date'" in warning for warning in warnings)
+    assert any("Column 'is_active'" in warning for warning in warnings)
+
+
+def test_check_data_type_consistency_with_nan():
+    df = pd.DataFrame(
+        {
+            "price": [10, np.nan, 30],
+            "start_date": ["2020-01-01", np.nan, "not_a_date"],
+            "is_active": [True, False, np.nan],
+        }
+    )
+    warnings = checks.check_data_type_consistency(df)
+    assert len(warnings) == 2
+    assert any("Column 'start_date'" in warning for warning in warnings)
+    assert any("Column 'is_active'" in warning for warning in warnings)
