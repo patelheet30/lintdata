@@ -7,7 +7,7 @@ authors = [{ name = "Heet Patel", email = "heetkpatel30@gmail.com" }]
 license = { file = "LICENSE" }
 requires-python = ">=3.13"
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
