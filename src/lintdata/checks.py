@@ -483,6 +483,26 @@ def check_cardinality(df: pd.DataFrame, high_threshold: int = 50, low_threshold:
 
 
 def check_skewness(df: pd.DataFrame, threshold: float = 1.0) -> List[str]:
+    """Check for skewness in numeric columns.
+
+    Detects if a column is right or left leaning in variance. Recommends if a log transformation might be required.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check
+        threshold (float, optional): The threshold for detecting threshold. Defaults to 1.0.
+
+    Raises:
+        ValueError: If the threshold is not a positive number.
+
+    Returns:
+        List[str]: A list of warning messages for skewed columns.
+
+    Example:
+    >>> df = pd.DataFrame({'a': [1, 2, 3, 100, 5]})
+    >>> warnings = check_skewness(df, threshold=1.0)
+    >>> print(warnings[0])
+    [Skewness] Column 'a' is highly right-skewed (skewness=2.5). Consider log transformation.
+    """
     warnings: List[str] = []
 
     if df.empty:
