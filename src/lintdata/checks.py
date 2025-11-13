@@ -752,3 +752,56 @@ def check_rare_categories(df: pd.DataFrame, threshold: float = 0.01) -> List[str
                 f"[Rare Categories] Column '{col}': {len(rare_categories)} categories appear <{percent:.1f}% of the time."
             )
     return warnings
+
+
+def check_date_format_consistency(df: pd.DataFrame) -> List[str]:
+    """Check for inconsistent date formats in string columns.
+
+    Attemps to detect columns that contain dates in multiple formats (e.g., 'YYYY-MM-DD' and 'DD/MM/YYYY' mixed together).
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+
+    Returns:
+        List[str]: A list of warning messages for columns with inconsistent date formats.
+
+    Example:
+    >>> df = pd.DataFrame({'date': ['2020-01-01', '01/02/2020', '2020-03-01']})
+    >>> warnings = check_date_format_consistency(df)
+    >>> print(warnings[0])
+    [Date Format Consistency] Column 'date' has inconsistent date formats.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    date_patterns = [
+        r"\d{4}-\d{2}-\d{2}",  # YYYY-MM-DD
+        r"\d{2}-\d{2}-\d{4}",  # MM-DD-YYYY or DD-MM-YYYY
+        r"\d{4}/\d{2}/\d{2}",  # YYYY/MM/DD
+        r"\d{2}/\d{2}/\d{4}",  # MM/DD/YYYY or DD/MM/YYYY
+        r"\d{4}\.\d{2}\.\d{2}",  # YYYY.MM.DD
+        r"\d{2}\.\d{2}\.\d{4}",  # MM.DD.YYYY or DD.MM.YYYY
+    ]
+
+    string_columns = df.select_dtypes(include=["object"]).columns
+
+    for col in string_columns:
+        if "date" not in col.lower() and "time" not in col.lower():
+            continue
+
+        non_null_values = df[col].dropna().astype(str)
+
+        if len(non_null_values) == 0:
+            continue
+
+        formats_found = set()
+        for pattern in date_patterns:
+            if non_null_values.str.contains(pattern, regex=True).any():
+                formats_found.add(pattern)
+
+        if len(formats_found) > 1:
+            warnings.append(f"[Date Format Consistency] Column '{col}' has inconsistent date formats.")
+
+    return warnings

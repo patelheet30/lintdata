@@ -826,3 +826,61 @@ def test_check_rare_categories_invalid_threshold():
         assert False, "Should have raised ValueError"
     except ValueError:
         pass
+
+
+# ==== Date Format Consistency Tests ====
+
+
+def test_check_date_format_consistency_no_dates():
+    df = pd.DataFrame({"name": ["Alice", "Bob", "Charlie"]})
+    warnings = checks.check_date_format_consistency(df)
+    assert warnings == []
+
+
+def test_check_date_format_consistency_consistent_format():
+    df = pd.DataFrame({"date": ["2020-01-01", "2020-02-01", "2020-03-01"]})
+    warnings = checks.check_date_format_consistency(df)
+    assert warnings == []
+
+
+def test_check_date_format_consistency_detects_mixed():
+    df = pd.DataFrame({"date": ["2020-01-01", "01/02/2020", "2020-03-01"]})
+    warnings = checks.check_date_format_consistency(df)
+    assert len(warnings) == 1
+    assert "Column 'date'" in warnings[0]
+    assert "inconsistent date formats" in warnings[0]
+
+
+def test_check_date_format_consistency_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_date_format_consistency(df)
+    assert warnings == []
+
+
+def test_check_date_format_consistency_no_date_column_names():
+    df = pd.DataFrame({"value": ["2020-01-01", "01/02/2020", "2020-03-01"]})
+    warnings = checks.check_date_format_consistency(df)
+    assert warnings == []
+
+
+def test_check_date_format_consistency_with_nan():
+    df = pd.DataFrame({"date": ["2020-01-01", np.nan, "01/02/2020", "2020-03-01"]})
+    warnings = checks.check_date_format_consistency(df)
+    assert len(warnings) == 1
+    assert "Column 'date'" in warnings[0]
+
+
+def test_check_date_format_consistency_multiple_date_columns():
+    df = pd.DataFrame(
+        {"start_date": ["2020-01-01", "01/02/2020"], "end_date": ["2020-03-01", "2020-04-01"], "value": [1, 2]}
+    )
+    warnings = checks.check_date_format_consistency(df)
+    assert len(warnings) == 1
+    assert "start_date" in warnings[0]
+
+
+def test_check_date_format_consistency_with_time():
+    df = pd.DataFrame({"timestamp": ["2020-01-01", "01/02/2020 10:30", "2020-03-01"]})
+    warnings = checks.check_date_format_consistency(df)
+    assert len(warnings) == 1
+    assert "timestamp" in warnings[0]
