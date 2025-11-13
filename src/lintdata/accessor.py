@@ -51,6 +51,7 @@ class LintAccessor:
         all_warnings.extend(checks.check_negative_values(self._df))
         all_warnings.extend(checks.check_rare_categories(self._df))
         all_warnings.extend(checks.check_date_format_consistency(self._df))
+        all_warnings.extend(checks.check_string_length_outliers(self._df))
 
         if not all_warnings:
             report_lines.append("No issues found. DataFrame looks good!")
