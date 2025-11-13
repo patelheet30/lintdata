@@ -2,7 +2,7 @@
 Implements the core LintData accessor for pandas Dataframes
 """
 
-from typing import List
+from typing import List, Optional, Union
 
 import pandas as pd
 
@@ -24,7 +24,41 @@ class LintAccessor:
         if not isinstance(obj, pd.DataFrame):
             raise AttributeError("LintData accessor can only be used with pandas DataFrames.")
 
-    def report(self) -> str:
+    def report(
+        self,
+        checks_to_run: Optional[Union[List[str], str]] = None,
+        outlier_threshold: float = 1.5,
+        skewness_threshold: float = 1.0,
+        rare_category_threshold: float = 0.01,
+        unique_column_threshold: float = 0.95,
+        cardinality_high_threshold: int = 50,
+        cardinality_low_threshold: int = 2,
+        string_length_threshold: float = 3.0,
+        negative_value_columns: Optional[List[str]] = None,
+    ) -> str:
+        """Generate a comprehensive quality report for the DataFrame.
+
+        Args:
+            checks_to_run (Optional[Union[List[str], str]], optional): Specific checks to run.
+                Options: 'missing', 'duplicates', 'mixed_types', 'whitespace', 'constant',
+                'unique', 'outliers', 'missing_patterns', 'case', 'cardinality', 'skewness',
+                'duplicate_columns', 'type_consistency', 'negative', 'rare_categories',
+                'date_format', 'string_length'. Use 'all' to run all checks. Defaults to None.
+            outlier_threshold (float, optional): Outlier detection threshold using the IQR method. Defaults to 1.5.
+            skewness_threshold (float, optional): Threshold for skewness detection. Defaults to 1.0.
+            rare_category_threshold (float, optional): Minimum proportion for rare categories. Defaults to 0.01.
+            unique_column_threshold (float, optional): Threshold for identifying unique columns. Defaults to 0.95.
+            cardinality_high_threshold (int, optional): High cardinality threshold. Defaults to 50.
+            cardinality_low_threshold (int, optional): Low cardinality threshold. Defaults to 2.
+            string_length_threshold (float, optional): Threshold for identifying string length outliers. Defaults to 3.0.
+            negative_value_columns (Optional[List[str]], optional): Specific columns to check for negative values. Defaults to None.
+
+        Raises:
+            ValueError: If invalid check names are provided.
+
+        Returns:
+            str: A comprehensive quality report for the DataFrame.
+        """
         report_lines = ["--- LintData Quality Report ---"]
 
         if self._df.empty:
@@ -34,24 +68,44 @@ class LintAccessor:
         report_lines.append(f"Shape: {self._df.shape}")
         report_lines.append("\nRunning checks...")
 
+        if checks_to_run == "all":
+            checks_to_run = None
+        elif isinstance(checks_to_run, str):
+            checks_to_run = [checks_to_run]
+
+        available_checks = {
+            "missing": lambda: checks.check_missing_values(self._df),
+            "duplicates": lambda: checks.check_duplicate_rows(self._df),
+            "mixed_types": lambda: checks.check_mixed_types(self._df),
+            "whitespace": lambda: checks.check_whitespace(self._df),
+            "constant": lambda: checks.check_constant_columns(self._df),
+            "unique": lambda: checks.check_unique_columns(self._df, threshold=unique_column_threshold),
+            "outliers": lambda: checks.check_outliers(self._df, threshold=outlier_threshold),
+            "missing_patterns": lambda: checks.check_missing_patterns(self._df),
+            "case": lambda: checks.check_case_consistency(self._df),
+            "cardinality": lambda: checks.check_cardinality(
+                self._df, high_threshold=cardinality_high_threshold, low_threshold=cardinality_low_threshold
+            ),
+            "skewness": lambda: checks.check_skewness(self._df, threshold=skewness_threshold),
+            "duplicate_columns": lambda: checks.check_duplicate_columns(self._df),
+            "type_consistency": lambda: checks.check_data_type_consistency(self._df),
+            "negative": lambda: checks.check_negative_values(self._df, columns=negative_value_columns),
+            "rare_categories": lambda: checks.check_rare_categories(self._df, threshold=rare_category_threshold),
+            "date_format": lambda: checks.check_date_format_consistency(self._df),
+            "string_length": lambda: checks.check_string_length_outliers(self._df, threshold=string_length_threshold),
+        }
+
+        if checks_to_run is None:
+            checks_to_execute = available_checks.keys()
+        else:
+            invalid_checks = [c for c in checks_to_run if c not in available_checks]
+            if invalid_checks:
+                raise ValueError(f"Invalid check(s): {invalid_checks}. Valid options: {list(available_checks.keys())}")
+            checks_to_execute = checks_to_run
+
         all_warnings: List[str] = []
-        all_warnings.extend(checks.check_missing_values(self._df))
-        all_warnings.extend(checks.check_duplicate_rows(self._df))
-        all_warnings.extend(checks.check_mixed_types(self._df))
-        all_warnings.extend(checks.check_whitespace(self._df))
-        all_warnings.extend(checks.check_constant_columns(self._df))
-        all_warnings.extend(checks.check_unique_columns(self._df))
-        all_warnings.extend(checks.check_outliers(self._df))
-        all_warnings.extend(checks.check_missing_patterns(self._df))
-        all_warnings.extend(checks.check_case_consistency(self._df))
-        all_warnings.extend(checks.check_cardinality(self._df))
-        all_warnings.extend(checks.check_skewness(self._df))
-        all_warnings.extend(checks.check_duplicate_columns(self._df))
-        all_warnings.extend(checks.check_data_type_consistency(self._df))
-        all_warnings.extend(checks.check_negative_values(self._df))
-        all_warnings.extend(checks.check_rare_categories(self._df))
-        all_warnings.extend(checks.check_date_format_consistency(self._df))
-        all_warnings.extend(checks.check_string_length_outliers(self._df))
+        for check_name in checks_to_execute:
+            all_warnings.extend(available_checks[check_name]())
 
         if not all_warnings:
             report_lines.append("No issues found. DataFrame looks good!")
