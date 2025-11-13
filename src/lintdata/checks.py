@@ -805,3 +805,69 @@ def check_date_format_consistency(df: pd.DataFrame) -> List[str]:
             warnings.append(f"[Date Format Consistency] Column '{col}' has inconsistent date formats.")
 
     return warnings
+
+
+def check_string_length_outliers(df: pd.DataFrame, threshold: float = 3.0) -> List[str]:
+    """Check for strings that are significantly longer or shorter than others.
+
+    Detects string values with unusual lengths compared to other values in the same
+    column, which may indicate data entry errors or data quality issues.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        threshold (float, optional): For small samples (n<10), this is a ratio multiplier.
+                                      For larger samples, this is the number of standard
+                                      deviations. Defaults to 3.0.
+
+    Returns:
+        List[str]: A list of warning messages for columns with string length outliers.
+
+    Example:
+    >>> df = pd.DataFrame({'email': ['a@b.com', 'test@example.com', 'x' * 100 + '@example.com']})
+    >>> warnings = check_string_length_outliers(df)
+    >>> print(warnings[0])
+    [String Length Outliers] Column 'email' has 1 value(s) with unusual length
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if threshold <= 0:
+        raise ValueError("Threshold must be a positive number.")
+
+    string_columns = df.select_dtypes(include=["object"]).columns
+
+    for col in string_columns:
+        non_null_values = df[col].dropna().astype(str)
+
+        if len(non_null_values) < 3:
+            continue
+
+        lengths = non_null_values.str.len()
+        n = len(lengths)
+
+        if n < 10:
+            median_length = lengths.median()
+
+            if median_length == 0:
+                continue
+
+            outlier_count = ((lengths > threshold * median_length) | (lengths < median_length / threshold)).sum()  # type: ignore
+
+            if outlier_count > 0:
+                warnings.append(f"[String Length] Column '{col}' has {outlier_count} value(s) with unusual length")
+        else:
+            mean_length = lengths.mean()
+            std_length = lengths.std()
+
+            if std_length == 0:
+                continue
+
+            z_scores = (lengths - mean_length) / std_length
+            outliers = (z_scores.abs() > threshold).sum()
+
+            if outliers > 0:
+                warnings.append(f"[String Length Outliers] Column '{col}' has {outliers} value(s) with unusual length")
+
+    return warnings

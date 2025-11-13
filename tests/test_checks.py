@@ -884,3 +884,73 @@ def test_check_date_format_consistency_with_time():
     warnings = checks.check_date_format_consistency(df)
     assert len(warnings) == 1
     assert "timestamp" in warnings[0]
+
+
+# ==== String Length Outliers Tests ====
+
+
+def test_check_string_length_outliers_no_outliers():
+    df = pd.DataFrame({"name": ["Alice", "Bob", "Charlie", "David"]})
+    warnings = checks.check_string_length_outliers(df)
+    assert warnings == []
+
+
+def test_check_string_length_outliers_detects_outliers():
+    df = pd.DataFrame({"email": ["a@b.com", "test@example.com", "x" * 100 + "@example.com"]})
+    warnings = checks.check_string_length_outliers(df)
+    assert len(warnings) == 1
+    assert "Column 'email'" in warnings[0]
+    assert "unusual length" in warnings[0]
+
+
+def test_check_string_length_outliers_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_string_length_outliers(df)
+    assert warnings == []
+
+
+def test_check_string_length_outliers_too_few_values():
+    df = pd.DataFrame({"name": ["A", "B"]})
+    warnings = checks.check_string_length_outliers(df)
+    assert warnings == []
+
+
+def test_check_string_length_outliers_custom_threshold():
+    df = pd.DataFrame({"name": ["Alice", "Bob", "Charlie", "x" * 20]})
+    warnings_high = checks.check_string_length_outliers(df, threshold=5.0)
+    assert warnings_high == []
+
+    warnings_low = checks.check_string_length_outliers(df, threshold=2.0)
+    assert len(warnings_low) == 1
+
+
+def test_check_string_length_outliers_with_nan():
+    df = pd.DataFrame({"email": ["a@b.com", np.nan, "test@example.com", "x" * 100 + "@example.com"]})
+    warnings = checks.check_string_length_outliers(df)
+    assert len(warnings) == 1
+    assert "Column 'email'" in warnings[0]
+
+
+def test_check_string_length_outliers_constant_length():
+    df = pd.DataFrame({"code": ["ABC", "DEF", "GHI", "JKL"]})
+    warnings = checks.check_string_length_outliers(df)
+    assert warnings == []
+
+
+def test_check_string_length_outliers_multiple_columns():
+    df = pd.DataFrame(
+        {"email": ["a@b.com", "test@example.com", "x" * 100 + "@example.com"], "name": ["A", "Bob", "x" * 50]}
+    )
+    warnings = checks.check_string_length_outliers(df)
+    assert len(warnings) == 2
+    assert any("email" in warning for warning in warnings)
+    assert any("name" in warning for warning in warnings)
+
+
+def test_check_string_length_outliers_invalid_threshold():
+    df = pd.DataFrame({"name": ["Alice", "Bob", "Charlie"]})
+    try:
+        checks.check_string_length_outliers(df, threshold=-1.0)
+        assert False, "Should have raised ValueError"
+    except ValueError:
+        pass
