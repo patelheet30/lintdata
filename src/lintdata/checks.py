@@ -639,3 +639,45 @@ def check_data_type_consistency(df: pd.DataFrame) -> List[str]:
                 warnings.append(f"[Type Warning] Column '{col}' is stored as {col_dtype}, consider boolean type.")
 
     return warnings
+
+
+def check_negative_values(df: pd.DataFrame, columns: Optional[List[str]] = None) -> List[str]:
+    """Check for negative values in columns that shouldn't have them.
+
+    Detects negative values in numerical columns. Optionally specify which columns to check, otherwise all numerical columns are checked.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        columns (Optional[List[str]], optional): Specific columns to check. Defaults to None. If None, all numeric columns are checked.
+
+    Returns:
+        List[str]: A list of warning messages for columns with negative values.
+
+    Example:
+    >>> df = pd.DataFrame({'age': [25, -30, 35], 'income': [50000, 60000, -70000]})
+    >>> warnings = check_negative_values(df, columns=['age'])
+    >>> print(warnings[0])
+    [Negative Values] Column 'age' has 1 negative value(s).
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if columns is None:
+        columns_to_check = df.select_dtypes(include=[np.number]).columns.to_list()
+    else:
+        columns_to_check = [col for col in columns if col in df.columns and pd.api.types.is_numeric_dtype(df[col])]
+
+    for col in columns_to_check:
+        non_null_values = df[col].dropna()
+
+        if len(non_null_values) == 0:
+            continue
+
+        negative_count = (non_null_values < 0).sum()
+
+        if negative_count > 0:
+            warnings.append(f"[Negative Values] Column '{col}' has {negative_count} negative value(s).")
+
+    return warnings

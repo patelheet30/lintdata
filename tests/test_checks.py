@@ -714,3 +714,57 @@ def test_check_data_type_consistency_with_nan():
     assert len(warnings) == 2
     assert any("Column 'start_date'" in warning for warning in warnings)
     assert any("Column 'is_active'" in warning for warning in warnings)
+
+
+# ==== Negative Value Check ====
+
+
+def test_check_negative_values_no_negatives():
+    df = pd.DataFrame({"age": [25, 30, 35], "price": [10.0, 20.0, 30.0]})
+    warnings = checks.check_negative_values(df)
+    assert warnings == []
+
+
+def test_check_negative_values_detects_negatives():
+    df = pd.DataFrame({"age": [25, -5, 30], "balance": [100, 200, 300]})
+    warnings = checks.check_negative_values(df)
+    assert len(warnings) == 1
+    assert "Column 'age'" in warnings[0]
+    assert "1 negative value(s)" in warnings[0]
+
+
+def test_check_negative_values_specific_columns():
+    df = pd.DataFrame({"age": [25, -5, 30], "balance": [100, -50, 200]})
+    warnings = checks.check_negative_values(df, columns=["age"])
+    assert len(warnings) == 1
+    assert "Column 'age'" in warnings[0]
+    assert "balance" not in str(warnings)
+
+
+def test_check_negative_values_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_negative_values(df)
+    assert warnings == []
+
+
+def test_check_negative_values_with_nan():
+    df = pd.DataFrame({"age": [25, -5, np.nan, 30]})
+    warnings = checks.check_negative_values(df)
+    assert len(warnings) == 1
+    assert "Column 'age'" in warnings[0]
+    assert "1 negative value(s)" in warnings[0]
+
+
+def test_check_negative_values_multiple_columns():
+    df = pd.DataFrame({"age": [25, -5, 30], "balance": [100, -50, 200], "score": [-10, -20, -30]})
+    warnings = checks.check_negative_values(df)
+    assert len(warnings) == 3
+    assert any("age" in warning for warning in warnings)
+    assert any("balance" in warning for warning in warnings)
+    assert any("score" in warning for warning in warnings)
+
+
+def test_check_negative_values_non_numeric_columns():
+    df = pd.DataFrame({"name": ["Alice", "Bob", "Charlie"], "age": [25, 30, 35]})
+    warnings = checks.check_negative_values(df)
+    assert warnings == []
