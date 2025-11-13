@@ -12,6 +12,16 @@ All notable changes to this project will be documented in this file.
 - `check_rare_categories`: New check to detect infrequent categories in categorical columns.
 - `check_date_format_consistency`: New check to identify inconsistent date formats within date columns.
 - `check_string_length_outliers`: New check to identify string length outliers in text columns.
+- Configuration system: Users can now customise thresholds and select specific checks to run.
+- `report()` method now accepts parameters to:
+  - Select specific checks via `checks_to_run` parameter
+  - Customise outlier detection thresholds via `outlier_thresholds` parameter
+  - Customise rare category frequency threshold via `rare_category_threshold` parameter
+  - Customise skewness threshold via `skewness_threshold` parameter
+  - Customise unique column threshold via `unique_column_threshold` parameter
+  - Customise cardinality threshold via `cardinality_high_threshold` and `cardinality_low_threshold` parameters
+  - Customise string length outlier thresholds via `string_length_threshold` parameter
+  - Customise which columns to check for negative values via `negative_value_columns` parameter
 
 ## [0.5.0] - 2025-11-03 - 2025-11-06
 
