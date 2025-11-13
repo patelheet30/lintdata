@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-11-13
+
+### Added
+
+- `check_negative_values`: New check to identify negative values in numerical columns.
+
 ## [0.5.0] - 2025-11-03 - 2025-11-06
 
 ### Added
