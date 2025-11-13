@@ -33,7 +33,7 @@ At this point, the library will be feature-complete for most data quality auditi
 ## v0.6.0
 
 - [x] Negative Values Check
-- [ ] Infrequent category detection (Rare Categories Check)
+- [x] Infrequent category detection (Rare Categories Check)
 - [ ] Date Format Consistency Check
 - [ ] String Length Outliers Checks
 - [ ] Configuration System (Custom thresholds, select checks to run, etc.)
