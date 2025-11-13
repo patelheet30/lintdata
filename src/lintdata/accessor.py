@@ -48,6 +48,7 @@ class LintAccessor:
         all_warnings.extend(checks.check_skewness(self._df))
         all_warnings.extend(checks.check_duplicate_columns(self._df))
         all_warnings.extend(checks.check_data_type_consistency(self._df))
+        all_warnings.extend(checks.check_negative_values(self._df))
 
         if not all_warnings:
             report_lines.append("No issues found. DataFrame looks good!")
