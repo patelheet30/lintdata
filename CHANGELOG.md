@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 - `check_negative_values`: New check to identify negative values in numerical columns.
 - `check_rare_categories`: New check to detect infrequent categories in categorical columns.
+- `check_date_format_consistency`: New check to identify inconsistent date formats within date columns.
 
 ## [0.5.0] - 2025-11-03 - 2025-11-06
 
