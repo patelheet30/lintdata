@@ -701,3 +701,54 @@ def check_negative_values(df: pd.DataFrame, columns: Optional[List[str]] = None)
             warnings.append(f"[Negative Values] Column '{col}' has {negative_count} negative value(s).")
 
     return warnings
+
+
+def check_rare_categories(df: pd.DataFrame, threshold: float = 0.01) -> List[str]:
+    """Check for categories that appear very infrequently.
+
+    Identifies categorical valaues that appear less than the threshold  percentage of times. These
+    rare categories can cause issues in modelling and analysis.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        threshold (float, optional): The minimum proportion for a category to not be considered rare. Defaults to 0.01 (1%).
+
+    Raises:
+        ValueError: If the threshold is not between 0 and 1.
+
+    Returns:
+        List[str]: A list of warning messages for columns with rare categories.
+
+    Example:
+    >>> df = pd.DataFrame({'category': ['A'] * 98 + ['B', 'C']})
+    >>> warnings = check_rare_categories(df, threshold=0.02)
+    >>> print(warnings[0])
+    [Rare Categories] Column 'category': 2 categories appear <2.0% of the time.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if not (0 < threshold < 1):
+        raise ValueError("Threshold must be between 0 and 1.")
+
+    categorical_columns = df.select_dtypes(include=["object", "category"]).columns
+
+    for col in categorical_columns:
+        non_null_values = df[col].dropna()
+
+        if len(non_null_values) == 0:
+            continue
+
+        value_counts = non_null_values.value_counts()
+        total_count = len(non_null_values)
+
+        rare_categories = value_counts[value_counts / total_count < threshold]
+
+        if len(rare_categories) > 0:
+            percent = threshold * 100
+            warnings.append(
+                f"[Rare Categories] Column '{col}': {len(rare_categories)} categories appear <{percent:.1f}% of the time."
+            )
+    return warnings

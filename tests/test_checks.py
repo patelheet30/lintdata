@@ -768,3 +768,61 @@ def test_check_negative_values_non_numeric_columns():
     df = pd.DataFrame({"name": ["Alice", "Bob", "Charlie"], "age": [25, 30, 35]})
     warnings = checks.check_negative_values(df)
     assert warnings == []
+
+
+# ==== Rare Categories Tests ====
+
+
+def test_check_rare_categories_no_rare():
+    df = pd.DataFrame({"category": ["A", "B", "C"] * 30})
+    warnings = checks.check_rare_categories(df)
+    assert warnings == []
+
+
+def test_check_rare_categories_detects_rare():
+    df = pd.DataFrame({"category": ["A"] * 98 + ["B", "C"]})
+    warnings = checks.check_rare_categories(df, threshold=0.02)
+    assert len(warnings) == 1
+    assert "Column 'category'" in warnings[0]
+    assert "2 categories" in warnings[0]
+    assert "<2.0%" in warnings[0]
+
+
+def test_check_rare_categories_empty_dataframe():
+    df = pd.DataFrame()
+    warnings = checks.check_rare_categories(df)
+    assert warnings == []
+
+
+def test_check_rare_categories_custom_threshold():
+    df = pd.DataFrame({"category": ["A"] * 90 + ["B"] * 5 + ["C"] * 5})
+    warnings_1 = checks.check_rare_categories(df, threshold=0.01)
+    assert warnings_1 == []
+
+    warnings_2 = checks.check_rare_categories(df, threshold=0.06)
+    assert len(warnings_2) == 1
+    assert "2 categories" in warnings_2[0]
+
+
+def test_check_rare_categories_with_nan():
+    df = pd.DataFrame({"category": ["A"] * 95 + ["B"] * 3 + [np.nan, np.nan]})
+    warnings = checks.check_rare_categories(df, threshold=0.05)
+    assert len(warnings) == 1
+    assert "1 categories" in warnings[0]
+
+
+def test_check_rare_categories_multiple_columns():
+    df = pd.DataFrame({"cat1": ["A"] * 98 + ["B", "C"], "cat2": ["X"] * 99 + ["Y"]})
+    warnings = checks.check_rare_categories(df, threshold=0.015)
+    assert len(warnings) == 2
+    assert any("cat1" in warning for warning in warnings)
+    assert any("cat2" in warning for warning in warnings)
+
+
+def test_check_rare_categories_invalid_threshold():
+    df = pd.DataFrame({"category": ["A", "B", "C"]})
+    try:
+        checks.check_rare_categories(df, threshold=1.5)
+        assert False, "Should have raised ValueError"
+    except ValueError:
+        pass
