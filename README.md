@@ -35,7 +35,7 @@ At this point, the library will be feature-complete for most data quality auditi
 - [x] Negative Values Check
 - [x] Infrequent category detection (Rare Categories Check)
 - [x] Date Format Consistency Check
-- [ ] String Length Outliers Checks
+- [x] String Length Outliers Checks
 - [ ] Configuration System (Custom thresholds, select checks to run, etc.)
 
 Switch to Pull Requests for new features and improvements.
