@@ -996,7 +996,6 @@ def check_special_characters(df: pd.DataFrame, threshold: float = 0.1) -> List[s
     Detects columns containing special characters that may indicate encoding issues, copy-paste errors,
     or data corruption. Looks for non-ASCII characters, control characters, and common mis-encoded symbols.
 
-
     Args:
         df (pd.DataFrame): The pandas DataFrame to check.
         threshold (float, optional): The proportion of special characters allowed before raising a warning. Defaults to 0.1.
