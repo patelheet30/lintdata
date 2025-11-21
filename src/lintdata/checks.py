@@ -1018,8 +1018,8 @@ def check_special_characters(df: pd.DataFrame, threshold: float = 0.1) -> List[s
     if df.empty:
         return warnings
 
-    if not (0 < threshold < 1):
-        raise ValueError("Threshold must be between 0 and 1.")
+    if not (0 <= threshold < 1):
+        raise ValueError("Threshold must be between 0 and 1, inclusive of 0.")
 
     string_columns = df.select_dtypes(include=["object"]).columns
 
