@@ -2,6 +2,8 @@
 Tests for the individual check functions in checks.py
 """
 
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 
@@ -954,3 +956,268 @@ def test_check_string_length_outliers_invalid_threshold():
         assert False, "Should have raised ValueError"
     except ValueError:
         pass
+
+
+# ==== Zero Inflation Tests ====
+
+
+def test_check_zero_inflation_no_zeros():
+    """No zero inflation in clean data."""
+    df = pd.DataFrame({"sales": [100, 200, 300, 400]})
+    warnings = checks.check_zero_inflation(df)
+    assert warnings == []
+
+
+def test_check_zero_inflation_detects_inflation():
+    """Detects columns with excessive zeros."""
+    df = pd.DataFrame({"purchases": [0, 0, 0, 0, 0, 100, 200]})
+    warnings = checks.check_zero_inflation(df, threshold=0.5)
+    assert len(warnings) == 1
+    assert "Column 'purchases'" in warnings[0]
+    assert "71.4%" in warnings[0] or "71%" in warnings[0]
+    assert "zero" in warnings[0].lower()
+
+
+def test_check_zero_inflation_custom_threshold():
+    """Custom threshold works correctly."""
+    df = pd.DataFrame({"col1": [0, 0, 0, 1, 2, 3, 4, 5, 6, 7]})
+
+    # 30% zeros - should not trigger with 0.5 threshold
+    warnings_high = checks.check_zero_inflation(df, threshold=0.5)
+    assert warnings_high == []
+
+    # Should trigger with 0.2 threshold
+    warnings_low = checks.check_zero_inflation(df, threshold=0.2)
+    assert len(warnings_low) == 1
+    assert "Column 'col1'" in warnings_low[0]
+
+
+def test_check_zero_inflation_empty_dataframe():
+    """Empty DataFrame returns no warnings."""
+    df = pd.DataFrame()
+    warnings = checks.check_zero_inflation(df)
+    assert warnings == []
+
+
+def test_check_zero_inflation_with_nan():
+    """NaN values are ignored in calculation."""
+    df = pd.DataFrame({"values": [0, 0, 0, np.nan, np.nan, 1, 2]})
+    warnings = checks.check_zero_inflation(df, threshold=0.5)
+    assert len(warnings) == 1
+    assert "60.0%" in warnings[0] or "60%" in warnings[0]  # 3 zeros out of 5 non-null
+
+
+def test_check_zero_inflation_non_numeric():
+    """Non-numeric columns are ignored."""
+    df = pd.DataFrame({"text": ["zero", "zero", "one"]})
+    warnings = checks.check_zero_inflation(df)
+    assert warnings == []
+
+
+def test_check_zero_inflation_multiple_columns():
+    """Multiple columns with zero inflation."""
+    df = pd.DataFrame({"col1": [0, 0, 0, 0, 0, 1], "col2": [1, 2, 3, 4, 5, 6], "col3": [0, 0, 0, 0, 1, 2]})
+    warnings = checks.check_zero_inflation(df, threshold=0.5)
+    assert len(warnings) == 2
+    assert any("col1" in w for w in warnings)
+    assert any("col3" in w for w in warnings)
+
+
+def test_check_zero_inflation_invalid_threshold():
+    """Invalid threshold raises ValueError."""
+    df = pd.DataFrame({"col": [0, 1, 2]})
+
+    try:
+        checks.check_zero_inflation(df, threshold=1.5)
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        assert "between 0 and 1" in str(e).lower()
+
+
+# ==== Future Dates Tests ====
+
+
+def test_check_future_dates_no_future():
+    """No future dates in clean data."""
+    past_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+    df = pd.DataFrame({"birth_date": pd.to_datetime([past_date, "1990-01-01", "1985-06-15"])})
+    warnings = checks.check_future_dates(df)
+    assert warnings == []
+
+
+def test_check_future_dates_detects_future():
+    """Detects future dates."""
+    future_date = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d")
+    df = pd.DataFrame({"event_date": pd.to_datetime(["1990-01-01", future_date, "1985-06-15"])})
+    warnings = checks.check_future_dates(df)
+    assert len(warnings) == 1
+    assert "Column 'event_date'" in warnings[0]
+    assert "1 date(s) in the future" in warnings[0]
+
+
+def test_check_future_dates_string_dates():
+    """Handles string date columns."""
+    future_date = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d")
+    df = pd.DataFrame({"date": ["1990-01-01", future_date, "1985-06-15"]})
+    warnings = checks.check_future_dates(df)
+    assert len(warnings) == 1
+    assert "Column 'date'" in warnings[0]
+
+
+def test_check_future_dates_specific_columns():
+    """Only checks specified columns."""
+    future_date = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d")
+    df = pd.DataFrame(
+        {"date1": pd.to_datetime(["1990-01-01", future_date]), "date2": pd.to_datetime(["2000-01-01", future_date])}
+    )
+    warnings = checks.check_future_dates(df, columns=["date1"])
+    assert len(warnings) == 1
+    assert "date1" in warnings[0]
+    assert "date2" not in str(warnings)
+
+
+def test_check_future_dates_custom_reference():
+    """Custom reference date works correctly."""
+    df = pd.DataFrame({"date": pd.to_datetime(["2020-01-01", "2022-01-01", "2025-01-01"])})
+    warnings = checks.check_future_dates(df, reference_date="2021-01-01")
+    assert len(warnings) == 1
+    assert "2 date(s) in the future" in warnings[0]
+
+
+def test_check_future_dates_empty_dataframe():
+    """Empty DataFrame returns no warnings."""
+    df = pd.DataFrame()
+    warnings = checks.check_future_dates(df)
+    assert warnings == []
+
+
+def test_check_future_dates_with_nan():
+    """NaN values are ignored."""
+    future_date = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d")
+    df = pd.DataFrame({"date": pd.to_datetime(["1990-01-01", np.nan, future_date])})  # type: ignore
+    warnings = checks.check_future_dates(df)
+    assert len(warnings) == 1
+    assert "1 date(s) in the future" in warnings[0]
+
+
+def test_check_future_dates_invalid_reference():
+    """Invalid reference date raises ValueError."""
+    df = pd.DataFrame({"date": pd.to_datetime(["1990-01-01"])})
+
+    try:
+        checks.check_future_dates(df, reference_date="not-a-date")
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        assert "ISO format" in str(e)
+
+
+def test_check_future_dates_multiple_columns():
+    """Multiple columns with future dates."""
+    future_date = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d")
+    df = pd.DataFrame(
+        {
+            "start_date": pd.to_datetime(["1990-01-01", future_date]),
+            "end_date": pd.to_datetime(["2000-01-01", future_date]),
+            "value": [1, 2],
+        }
+    )
+    warnings = checks.check_future_dates(df)
+    assert len(warnings) == 2
+    assert any("start_date" in w for w in warnings)
+    assert any("end_date" in w for w in warnings)
+
+
+# ==== Special Characters Tests ====
+
+
+def test_check_special_characters_clean_data():
+    """No special characters in clean data."""
+    df = pd.DataFrame({"name": ["Alice", "Bob", "Charlie"]})
+    warnings = checks.check_special_characters(df)
+    assert warnings == []
+
+
+def test_check_special_characters_detects_encoding_issues():
+    """Detects encoding artifacts."""
+    df = pd.DataFrame({"text": ["Normal text", "Bobâ„¢", "Aliceâ€¢"]})
+    warnings = checks.check_special_characters(df)
+    assert len(warnings) == 1
+    assert "Column 'text'" in warnings[0]
+    assert "special characters" in warnings[0].lower()
+
+
+def test_check_special_characters_non_ascii():
+    """Detects non-ASCII characters."""
+    df = pd.DataFrame({"name": ["Alice", "Café", "Naïve", "José"]})
+    warnings = checks.check_special_characters(df, threshold=0.1)
+    assert len(warnings) == 1
+    assert "Column 'name'" in warnings[0]
+
+
+def test_check_special_characters_custom_threshold():
+    """Custom threshold works correctly."""
+    df = pd.DataFrame({"text": ["Normal"] * 9 + ["Specialâ„¢"]})
+
+    # 10% special - should not trigger with 0.2 threshold
+    warnings_high = checks.check_special_characters(df, threshold=0.2)
+    assert warnings_high == []
+
+    # Should trigger with 0.05 threshold
+    warnings_low = checks.check_special_characters(df, threshold=0.05)
+    assert len(warnings_low) == 1
+
+
+def test_check_special_characters_empty_dataframe():
+    """Empty DataFrame returns no warnings."""
+    df = pd.DataFrame()
+    warnings = checks.check_special_characters(df)
+    assert warnings == []
+
+
+def test_check_special_characters_numeric_columns():
+    """Numeric columns are ignored."""
+    df = pd.DataFrame({"numbers": [1, 2, 3, 4]})
+    warnings = checks.check_special_characters(df)
+    assert warnings == []
+
+
+def test_check_special_characters_with_nan():
+    """NaN values are ignored."""
+    df = pd.DataFrame({"text": ["Normal", "Bobâ„¢", np.nan, "Alice"]})
+    warnings = checks.check_special_characters(df, threshold=0.2)
+    assert len(warnings) == 1
+    assert "33.3%" in warnings[0] or "33%" in warnings[0]  # 1 out of 3 non-null
+
+
+def test_check_special_characters_control_chars():
+    """Detects control characters."""
+    df = pd.DataFrame({"text": ["Normal", "With\x00null", "With\x1fcontrol"]})
+    warnings = checks.check_special_characters(df, threshold=0.1)
+    assert len(warnings) == 1
+    assert "Column 'text'" in warnings[0]
+
+
+def test_check_special_characters_multiple_columns():
+    """Multiple columns with special characters."""
+    df = pd.DataFrame(
+        {
+            "col1": ["Normal", "Specialâ„¢", "Moreâ€¢"],
+            "col2": ["Clean", "Text", "Here"],
+            "col3": ["Café", "Naïve", "José"],
+        }
+    )
+    warnings = checks.check_special_characters(df, threshold=0.1)
+    assert len(warnings) == 2
+    assert any("col1" in w for w in warnings)
+    assert any("col3" in w for w in warnings)
+
+
+def test_check_special_characters_invalid_threshold():
+    """Invalid threshold raises ValueError."""
+    df = pd.DataFrame({"text": ["Normal"]})
+
+    try:
+        checks.check_special_characters(df, threshold=1.5)
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        assert "between 0 and 1" in str(e).lower()

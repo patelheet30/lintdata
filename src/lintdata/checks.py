@@ -871,3 +871,179 @@ def check_string_length_outliers(df: pd.DataFrame, threshold: float = 3.0) -> Li
                 warnings.append(f"[String Length Outliers] Column '{col}' has {outliers} value(s) with unusual length")
 
     return warnings
+
+
+def check_zero_inflation(df: pd.DataFrame, threshold: float = 0.5) -> List[str]:
+    """Check for columns with an excessive proportion of zero values.
+
+    Detects numerical columns where zeros make up more than the specified threshold percentage of values. This can
+    indicate data collection issues, default values, or sparse data that may need special handling
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        threshold (float, optional): The minimum proportion of zeros to flag (0-1). Defaults to 0.5 (50%).
+
+    Raises:
+        ValueError: If the threshold is not between 0 and 1.
+
+    Returns:
+        List[str]: A list of warning messages for columns with excessive zero values.
+
+    Example:
+    >>> df = pd.DataFrame({'purchases': [0, 0, 0, 0, 0, 100, 200]})
+    >>> warnings = check_zero_inflation(df, threshold=0.5)
+    >>> print(warnings[0])
+    [Zero Inflation] Column 'purchases': 71.4% of values are zero
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if not (0 < threshold < 1):
+        raise ValueError("Threshold must be between 0 and 1.")
+
+    numeric_columns = df.select_dtypes(include=[np.number]).columns
+
+    for col in numeric_columns:
+        non_null_values = df[col].dropna()
+
+        if len(non_null_values) == 0:
+            continue
+
+        zero_count = (non_null_values == 0).sum()
+        total_count = len(non_null_values)
+        zero_ratio = zero_count / total_count
+
+        if zero_ratio >= threshold:
+            percent = zero_ratio * 100
+            warnings.append(f"[Zero Inflation] Column '{col}': {percent:.1f}% of values are zero")
+
+    return warnings
+
+
+def check_future_dates(
+    df: pd.DataFrame, columns: Optional[List[str]] = None, reference_date: Optional[str] = None
+) -> List[str]:
+    """Check for dates that occur in the future.
+
+    Identifies date values that are later than the reference date (default: today), which may
+    indicate data entry errors or incorrect date parsing for historical data.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        columns (Optional[List[str]], optional): Specific columns to check. If None, checks all datetime columns and columns with 'date' in the name. Defaults to None.
+        reference_date (Optional[str], optional): The reference date to compare against. If None, uses today's date. Defaults to None.
+
+    Raises:
+        ValueError: If reference_date is provided but not in ISO format (YYYY-MM-DD).
+
+    Returns:
+        List[str]: A list of warning messages for future dates.
+
+    Example:
+    >>> df = pd.DataFrame({'birth_date': pd.to_datetime(['1990-01-01', '2050-01-01', '1985-06-15'])})
+    >>> warnings = check_future_dates(df)
+    >>> print(warnings[0])
+    [Future Dates] Column 'birth_date' has 1 date(s) in the future compared to 2024-06-01.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if reference_date is None:
+        reference_dt = pd.Timestamp.now()
+    else:
+        try:
+            reference_dt = pd.to_datetime(reference_date)
+        except Exception:
+            raise ValueError("reference_date must be in ISO format (YYYY-MM-DD)")
+
+    if columns is None:
+        datetime_columns = df.select_dtypes(include=["datetime64"]).columns.to_list()
+        date_name_columns = [col for col in df.columns if "date" in col.lower() or "time" in col.lower()]
+        columns_to_check = list(set(datetime_columns + date_name_columns))
+    else:
+        columns_to_check = [col for col in columns if col in df.columns]
+
+    for col in columns_to_check:
+        if pd.api.types.is_datetime64_any_dtype(df[col]):
+            date_values = df[col].dropna()
+        else:
+            try:
+                date_values = pd.to_datetime(df[col], errors="coerce").dropna()
+            except Exception:
+                continue
+
+        if len(date_values) == 0:
+            continue
+
+        future_dates = date_values[date_values > reference_dt]
+        future_count = len(future_dates)
+
+        if future_count > 0:
+            warnings.append(
+                f"[Future Dates] Column '{col}' has {future_count} date(s) in the future compared to {reference_dt.date()}."
+            )
+
+    return warnings
+
+
+def check_special_characters(df: pd.DataFrame, threshold: float = 0.1) -> List[str]:
+    """Check for unusual or potentially problematic special characters in text columns.
+
+    Detects columns containing special characters that may indicate encoding issues, copy-paste errors,
+    or data corruption. Looks for non-ASCII characters, control characters, and common mis-encoded symbols.
+
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        threshold (float, optional): The proportion of special characters allowed before raising a warning. Defaults to 0.1.
+
+    Raises:
+        ValueError: If the threshold is not between 0 and 1.
+
+    Returns:
+        List[str]: A list of warning messages for special characters.
+
+    Example:
+    >>> df = pd.DataFrame({'name': ['Alice', 'Bobâ„¢', 'Charlieâ€¢']})
+    >>> warnings = check_special_characters(df)
+    >>> print(warnings[0])
+    [Special Characters] Column 'name': 66.7% of values contain special or non-standard characters.
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if not (0 < threshold < 1):
+        raise ValueError("Threshold must be between 0 and 1.")
+
+    string_columns = df.select_dtypes(include=["object"]).columns
+
+    suspicious_pattern = (
+        r"[^\x00-\x7F]|"  # Non-ASCII characters
+        r"[\x00-\x1F\x7F]|"  # Control characters
+        r"â€[™¢ž¦]|"  # Common encoding artifacts
+        r"â„¢|Â©|Â®"  # More encoding artifacts
+    )
+
+    for col in string_columns:
+        non_null_values = df[col].dropna().astype(str)
+
+        if len(non_null_values) == 0:
+            continue
+
+        has_special = non_null_values.str.contains(suspicious_pattern, regex=True, na=False)
+        special_count = has_special.sum()
+        total_count = len(non_null_values)
+        special_ratio = special_count / total_count
+
+        if special_ratio >= threshold:
+            percent = special_ratio * 100
+            warnings.append(
+                f"[Special Characters] Column '{col}': {percent:.1f}% of values contain special or non-standard characters."
+            )
+    return warnings
