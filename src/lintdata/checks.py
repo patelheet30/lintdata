@@ -915,7 +915,7 @@ def check_zero_inflation(df: pd.DataFrame, threshold: float = 0.5) -> List[str]:
         total_count = len(non_null_values)
         zero_ratio = zero_count / total_count
 
-        if zero_ratio >= threshold:
+        if zero_ratio > threshold:
             percent = zero_ratio * 100
             warnings.append(f"[Zero Inflation] Column '{col}': {percent:.1f}% of values are zero")
 
