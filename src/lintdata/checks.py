@@ -1024,8 +1024,7 @@ def check_special_characters(df: pd.DataFrame, threshold: float = 0.1) -> List[s
     string_columns = df.select_dtypes(include=["object"]).columns
 
     suspicious_pattern = (
-        r"[^\x00-\x7F]|"  # Non-ASCII characters
-        r"[\x00-\x1F\x7F]|"  # Control characters
+        r"[^\x20-\x7E]|"  # Non-printable ASCII and non-ASCII characters
         r"â€[™¢ž¦]|"  # Common encoding artifacts
         r"â„¢|Â©|Â®"  # More encoding artifacts
     )
