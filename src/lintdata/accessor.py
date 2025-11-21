@@ -35,6 +35,10 @@ class LintAccessor:
         cardinality_low_threshold: int = 2,
         string_length_threshold: float = 3.0,
         negative_value_columns: Optional[List[str]] = None,
+        zero_inflation_threshold: float = 0.5,
+        future_date_columns: Optional[List[str]] = None,
+        future_date_reference: Optional[str] = None,
+        special_chars_threshold: float = 0.1,
     ) -> str:
         """Generate a comprehensive quality report for the DataFrame.
 
@@ -43,7 +47,8 @@ class LintAccessor:
                 Options: 'missing', 'duplicates', 'mixed_types', 'whitespace', 'constant',
                 'unique', 'outliers', 'missing_patterns', 'case', 'cardinality', 'skewness',
                 'duplicate_columns', 'type_consistency', 'negative', 'rare_categories',
-                'date_format', 'string_length'. Use 'all' to run all checks. Defaults to None.
+                'date_format', 'string_length', 'zero_inflation', 'future_dates', 'special_chars'.
+                Use 'all' to run all checks. Defaults to None.
             outlier_threshold (float, optional): Outlier detection threshold using the IQR method. Defaults to 1.5.
             skewness_threshold (float, optional): Threshold for skewness detection. Defaults to 1.0.
             rare_category_threshold (float, optional): Minimum proportion for rare categories. Defaults to 0.01.
@@ -52,6 +57,10 @@ class LintAccessor:
             cardinality_low_threshold (int, optional): Low cardinality threshold. Defaults to 2.
             string_length_threshold (float, optional): Threshold for identifying string length outliers. Defaults to 3.0.
             negative_value_columns (Optional[List[str]], optional): Specific columns to check for negative values. Defaults to None.
+            zero_inflation_threshold (float, optional): Threshold for zero-inflation detection. Defaults to 0.5.
+            future_date_columns (Optional[List[str]], optional): Specific columns to check for future dates. Defaults to None.
+            future_date_reference (Optional[str], optional): Reference date for future date checks in ISO format (YYYY-MM-DD). Defaults to None (current date).
+            special_chars_threshold (float, optional): Threshold for special character detection in string columns. Defaults to 0.1.
 
         Raises:
             ValueError: If invalid check names are provided.
@@ -93,6 +102,11 @@ class LintAccessor:
             "rare_categories": lambda: checks.check_rare_categories(self._df, threshold=rare_category_threshold),
             "date_format": lambda: checks.check_date_format_consistency(self._df),
             "string_length": lambda: checks.check_string_length_outliers(self._df, threshold=string_length_threshold),
+            "zero_inflation": lambda: checks.check_zero_inflation(self._df, threshold=zero_inflation_threshold),
+            "future_dates": lambda: checks.check_future_dates(
+                self._df, columns=future_date_columns, reference_date=future_date_reference
+            ),
+            "special_chars": lambda: checks.check_special_characters(self._df, threshold=special_chars_threshold),
         }
 
         if checks_to_run is None:

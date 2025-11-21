@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-11-21
+
+### Added
+
+- `check_zero_inflation`: New check to identify columns with a high proportion of zero values.
+- `check_future_dates`: New check to identify dates that are in the future compared to a reference date.
+- `check_special_characters`: New check to identify unusual or special characters in string columns.
+
 ## [0.6.0] - 2025-11-13
 
 ### Added

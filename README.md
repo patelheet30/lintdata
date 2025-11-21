@@ -42,9 +42,9 @@ Switch to Pull Requests for new features and improvements.
 
 ## v0.7.0
 
-- [ ] Zero Inflated Columns Check
-- [ ] Future Dates Check
-- [ ] Special Characters Check (Encoding Issues)
+- [x] Zero Inflated Columns Check
+- [x] Future Dates Check
+- [x] Special Characters Check (Encoding Issues)
 - [ ] HTML Reports
 - [ ] Export Options (JSON, CSV, etc.)
 
