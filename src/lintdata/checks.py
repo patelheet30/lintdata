@@ -877,7 +877,7 @@ def check_zero_inflation(df: pd.DataFrame, threshold: float = 0.5) -> List[str]:
     """Check for columns with an excessive proportion of zero values.
 
     Detects numerical columns where zeros make up more than the specified threshold percentage of values. This can
-    indicate data collection issues, default values, or sparse data that may need special handling
+    indicate data collection issues, default values, or sparse data that may need special handling.
 
     Args:
         df (pd.DataFrame): The pandas DataFrame to check.
