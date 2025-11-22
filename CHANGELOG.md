@@ -12,6 +12,9 @@ All notable changes to this project will be documented in this file.
 - `check_future_dates`: New check to identify dates that are in the future compared to a reference date.
 - `check_special_characters`: New check to identify unusual or special characters in string columns.
 - Integrate HTML outputs with existing reporting system.
+- JSON, CSV, Dict outputs integrated with existing reporting system.
+- New helper methods to parse warning strings into structured data.
+- All export formats support the full configuration system (custom thresholds, check selection)
 
 ### Changed
 
