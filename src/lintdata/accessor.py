@@ -4,6 +4,7 @@ Implements the core LintData accessor for pandas Dataframes
 
 import csv
 import json
+import re
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
@@ -83,13 +84,13 @@ class LintAccessor:
             >>> report = df.lint.report()
 
             >>> # HTML report
-            >>> df.lint.report(format='html', output='report.html')
+            >>> df.lint.report(report_format='html', output='report.html')
 
             >>> # JSON export
-            >>> df.lint.report(format='json', output='report.json')
+            >>> df.lint.report(report_format='json', output='report.json')
 
             >>> # CSV export
-            >>> df.lint.report(format='csv', output='issues.csv')
+            >>> df.lint.report(report_format='csv', output='issues.csv')
 
             >>> # Get structured data
             >>> data = df.lint.report(return_dict=True)
@@ -100,7 +101,7 @@ class LintAccessor:
 
         if self._df.empty:
             if return_dict:
-                return {"shape": (0, 0), "issues": [], "issue_count": 0}
+                return {"shape": [0, 0], "issues": [], "issue_count": 0}
 
             empty_message = "The DataFrame is empty. No checks run."
             if report_format == "text":
@@ -233,14 +234,8 @@ class LintAccessor:
 
         # Extract column name if present
         column = None
-        if "Column '" in message or 'Column "' in message:
-            try:
-                if "Column '" in message:
-                    column = message.split("Column '")[1].split("'")[0]
-                else:
-                    column = message.split('Column "')[1].split('"')[0]
-            except IndexError:
-                pass
+        column_match = re.search(r"Column ['\"]([^'\"]+)['\"]", message)
+        column = column_match.group(1) if column_match else None
 
         # Determine severity
         severity = self._get_severity(warning)

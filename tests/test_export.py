@@ -385,6 +385,6 @@ def test_return_dict_empty_dataframe():
 
     data = df.lint.report(return_dict=True)
 
-    assert data["shape"] == (0, 0)
+    assert data["shape"] == [0, 0]
     assert data["issue_count"] == 0
     assert data["issues"] == []
