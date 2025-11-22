@@ -234,8 +234,8 @@ class LintAccessor:
 
         # Extract column name if present
         column = None
-        column_match = re.search(r"Column ['\"]([^'\"]+)['\"]", message)
-        column = column_match.group(1) if column_match else None
+        column_match = re.search(r"Column (['\"])(.*?)\1", message)
+        column = column_match.group(2) if column_match else None
 
         # Determine severity
         severity = self._get_severity(warning)
