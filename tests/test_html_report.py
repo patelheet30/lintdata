@@ -218,7 +218,7 @@ def test_html_report_escapes_special_chars():
 
     html_report = df.lint.report(format="html")
 
-    assert "&lt;script&gt;" in html_report or "script" not in html_report.lower()
+    assert "&lt;script&gt;" in html_report
 
 
 def test_html_report_with_custom_thresholds():
