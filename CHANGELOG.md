@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Enhanced `report()` method to include HTML output format alongside existing formats (text).
-- Updated `report()` to add `output` parameter to specify output format (e.g., `text`, `html`).
+- Updated `report()` to add `output` parameter to specify output file path for saving reports; output format is now specified via the `format` parameter (e.g., `text`, `html`)
 - Default is still `text` to maintain backward compatibility.
 
 ## [0.6.0] - 2025-11-13
