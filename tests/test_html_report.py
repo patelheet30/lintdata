@@ -9,7 +9,7 @@ def test_html_report_generation():
     """Test that HTML report generates valid HTML."""
     df = pd.DataFrame({"a": [1, np.nan, 3], "b": [1, 2, 2]})
 
-    html_report = df.lint.report(format="html")
+    html_report = df.lint.report(report_format="html")
 
     # Check HTML structure
     assert "<!DOCTYPE html>" in html_report
@@ -71,7 +71,7 @@ def test_html_report_clean_data():
         }
     )
 
-    html_report = df.lint.report(format="html")
+    html_report = df.lint.report(report_format="html")
 
     assert "No issues found" in html_report
     assert "DataFrame looks good" in html_report
@@ -85,7 +85,7 @@ def test_html_report_save_to_file():
         output_path = Path(tmpdir) / "report.html"
 
         # Generate and save
-        result = df.lint.report(format="html", output=str(output_path))
+        result = df.lint.report(report_format="html", output=str(output_path))
 
         # Check file exists
         assert output_path.exists()
@@ -106,7 +106,7 @@ def test_html_report_metadata():
     """Test that HTML report includes DataFrame metadata."""
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
 
-    html_report = df.lint.report(format="html")
+    html_report = df.lint.report(report_format="html")
 
     # Check shape is displayed
     assert "3" in html_report  # 3 rows or 3 columns
@@ -124,7 +124,7 @@ def test_html_report_multiple_issues():
         }
     )
 
-    html_report = df.lint.report(format="html")
+    html_report = df.lint.report(report_format="html")
 
     # Check all issues are present
     assert "Missing Values" in html_report
@@ -140,7 +140,7 @@ def test_html_report_specific_checks():
     """Test HTML report with specific checks only."""
     df = pd.DataFrame({"a": [1, np.nan, 3], "b": [1, 2, 2]})
 
-    html_report = df.lint.report(format="html", checks_to_run=["missing"])
+    html_report = df.lint.report(report_format="html", checks_to_run=["missing"])
 
     # Only missing values should be reported
     assert "Missing Values" in html_report
@@ -152,7 +152,7 @@ def test_html_report_empty_dataframe():
     """Test HTML report with empty DataFrame."""
     df = pd.DataFrame()
 
-    html_report = df.lint.report(format="html")
+    html_report = df.lint.report(report_format="html")
 
     assert "<!DOCTYPE html>" in html_report
     assert "LintData Quality Report" in html_report
@@ -163,7 +163,7 @@ def test_html_report_has_styling():
     """Test that HTML report includes CSS styling."""
     df = pd.DataFrame({"a": [1, 2, 3]})
 
-    html_report = df.lint.report(format="html")
+    html_report = df.lint.report(report_format="html")
 
     # Check for CSS
     assert "<style>" in html_report
@@ -189,7 +189,7 @@ def test_invalid_format_raises_error():
     df = pd.DataFrame({"a": [1, 2, 3]})
 
     try:
-        df.lint.report(format="pdf")
+        df.lint.report(report_format="pdf")
         assert False, "Should have raised ValueError"
     except ValueError as e:
         assert "Invalid format" in str(e)
@@ -206,7 +206,7 @@ def test_html_report_severity_levels():
         }
     )
 
-    html_report = df.lint.report(format="html")
+    html_report = df.lint.report(report_format="html")
 
     assert 'class="warning' in html_report
 
@@ -216,7 +216,7 @@ def test_html_report_escapes_special_chars():
     # This is important for security (XSS prevention)
     df = pd.DataFrame({"<script>": [1, 2, 3]})
 
-    html_report = df.lint.report(format="html")
+    html_report = df.lint.report(report_format="html")
 
     assert "&lt;script&gt;" in html_report
 
@@ -225,7 +225,7 @@ def test_html_report_with_custom_thresholds():
     """Test HTML report with custom check thresholds."""
     df = pd.DataFrame({"a": [1, 2, 3, 100]})
 
-    html_report = df.lint.report(format="html", checks_to_run=["outliers"], outlier_threshold=5.0)
+    html_report = df.lint.report(report_format="html", checks_to_run=["outliers"], outlier_threshold=5.0)
 
     # With high threshold, should find no outliers
     assert "No issues found" in html_report
