@@ -40,7 +40,7 @@ class LintAccessor:
         future_date_columns: Optional[List[str]] = None,
         future_date_reference: Optional[str] = None,
         special_chars_threshold: float = 0.1,
-        format: str = "text",
+        report_format: str = "text",
         output: Optional[str] = None,
     ) -> str:
         """Generate a comprehensive quality report for the DataFrame.
@@ -64,7 +64,7 @@ class LintAccessor:
             future_date_columns (Optional[List[str]], optional): Specific columns to check for future dates. Defaults to None.
             future_date_reference (Optional[str], optional): Reference date for future date check (YYYY-MM-DD). Defaults to None (today).
             special_chars_threshold (float, optional): Minimum proportion of values with special characters. Defaults to 0.1.
-            format (str, optional): Output format. Options: 'text', 'html'. Defaults to 'text'.
+            report_format (str, optional): Output format. Options: 'text', 'html'. Defaults to 'text'.
             output (Optional[str], optional): File path to save the report. If None, returns as string. Defaults to None.
 
         Raises:
@@ -85,12 +85,12 @@ class LintAccessor:
             >>> html_report = df.lint.report(format='html')
         """
         valid_formats = ["text", "html"]
-        if format not in valid_formats:
-            raise ValueError(f"Invalid format '{format}'. Valid options: {valid_formats}")
+        if report_format not in valid_formats:
+            raise ValueError(f"Invalid format '{report_format}'. Valid options: {valid_formats}")
 
         if self._df.empty:
             empty_message = "The DataFrame is empty. No checks run."
-            if format == "text":
+            if report_format == "text":
                 result = f"--- LintData Quality Report ---\n{empty_message}"
             else:
                 result = HTMLReportFormatter.generate((0, 0), [])
@@ -145,7 +145,7 @@ class LintAccessor:
         for check_name in checks_to_execute:
             all_warnings.extend(available_checks[check_name]())
 
-        if format == "text":
+        if report_format == "text":
             report_lines = ["--- LintData Quality Report ---"]
             report_lines.append(f"Shape: {self._df.shape}")
             report_lines.append("\nRunning checks...")
@@ -160,12 +160,12 @@ class LintAccessor:
             report_lines.append("\n--- End of Report ---")
             result = "\n".join(report_lines)
 
-        elif format == "html":
+        elif report_format == "html":
             result = HTMLReportFormatter.generate(self._df.shape, all_warnings)
 
         # Save to file if output path provided
         if output:
             with open(output, "w", encoding="utf-8") as f:
-                f.write(result)  # type: ignore
+                f.write(result)  # pyright: ignore[reportPossiblyUnboundVariable]
 
-        return result  # type: ignore
+        return result  # pyright: ignore[reportPossiblyUnboundVariable]
