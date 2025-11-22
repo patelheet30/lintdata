@@ -11,6 +11,13 @@ All notable changes to this project will be documented in this file.
 - `check_zero_inflation`: New check to identify columns with a high proportion of zero values.
 - `check_future_dates`: New check to identify dates that are in the future compared to a reference date.
 - `check_special_characters`: New check to identify unusual or special characters in string columns.
+- Integrate HTML outputs with existing reporting system.
+
+### Changed
+
+- Enhanced `report()` method to include HTML output format alongside existing formats (text).
+- Updated `report()` to add `output` parameter to specify output file path for saving reports; output format is now specified via the `report_format` parameter (e.g., `text`, `html`)
+- Default is still `text` to maintain backward compatibility.
 
 ## [0.6.0] - 2025-11-13
 
