@@ -2,7 +2,9 @@
 Implements the core LintData accessor for pandas Dataframes
 """
 
-from typing import List, Optional, Union
+import csv
+import json
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -42,7 +44,8 @@ class LintAccessor:
         special_chars_threshold: float = 0.1,
         report_format: str = "text",
         output: Optional[str] = None,
-    ) -> str:
+        return_dict: bool = False,
+    ) -> Union[str, Dict[str, Any]]:
         """Generate a comprehensive quality report for the DataFrame.
 
         Args:
@@ -64,36 +67,50 @@ class LintAccessor:
             future_date_columns (Optional[List[str]], optional): Specific columns to check for future dates. Defaults to None.
             future_date_reference (Optional[str], optional): Reference date for future date check (YYYY-MM-DD). Defaults to None (today).
             special_chars_threshold (float, optional): Minimum proportion of values with special characters. Defaults to 0.1.
-            report_format (str, optional): Output format. Options: 'text', 'html'. Defaults to 'text'.
+            report_format (str, optional): Output format. Options: 'text', 'html', 'json', 'csv'. Defaults to 'text'.
             output (Optional[str], optional): File path to save the report. If None, returns as string. Defaults to None.
+            return_dict (bool, optional): If True, returns structured dictionary instead of formatted string. Defaults to False.
 
         Raises:
             ValueError: If invalid check names are provided or invalid format specified.
 
         Returns:
-            str: A comprehensive quality report for the DataFrame in the specified format.
+            Union[str, Dict[str, Any]]: A comprehensive quality report in the specified format,
+                or a structured dictionary if return_dict=True.
 
         Example:
             >>> # Text report
             >>> report = df.lint.report()
-            >>> print(report)
 
-            >>> # HTML report saved to file
+            >>> # HTML report
             >>> df.lint.report(format='html', output='report.html')
 
-            >>> # HTML report as string
-            >>> html_report = df.lint.report(format='html')
+            >>> # JSON export
+            >>> df.lint.report(format='json', output='report.json')
+
+            >>> # CSV export
+            >>> df.lint.report(format='csv', output='issues.csv')
+
+            >>> # Get structured data
+            >>> data = df.lint.report(return_dict=True)
         """
-        valid_formats = ["text", "html"]
+        valid_formats = ["text", "html", "json", "csv"]
         if report_format not in valid_formats:
             raise ValueError(f"Invalid format '{report_format}'. Valid options: {valid_formats}")
 
         if self._df.empty:
+            if return_dict:
+                return {"shape": (0, 0), "issues": [], "issue_count": 0}
+
             empty_message = "The DataFrame is empty. No checks run."
             if report_format == "text":
                 result = f"--- LintData Quality Report ---\n{empty_message}"
-            else:
+            elif report_format == "html":
                 result = HTMLReportFormatter.generate((0, 0), [])
+            elif report_format == "json":
+                result = json.dumps({"shape": [0, 0], "issues": [], "issue_count": 0}, indent=2)
+            else:  # csv
+                result = "check,column,severity,message\n"
 
             if output:
                 with open(output, "w", encoding="utf-8") as f:
@@ -145,6 +162,10 @@ class LintAccessor:
         for check_name in checks_to_execute:
             all_warnings.extend(available_checks[check_name]())
 
+        if return_dict:
+            structured_data = self._format_as_dict(all_warnings)
+            return structured_data
+
         if report_format == "text":
             report_lines = ["--- LintData Quality Report ---"]
             report_lines.append(f"Shape: {self._df.shape}")
@@ -163,9 +184,123 @@ class LintAccessor:
         elif report_format == "html":
             result = HTMLReportFormatter.generate(self._df.shape, all_warnings)
 
+        elif report_format == "json":
+            structured_data = self._format_as_dict(all_warnings)
+            result = json.dumps(structured_data, indent=2)
+
+        elif report_format == "csv":
+            result = self._format_as_csv(all_warnings)
+
         # Save to file if output path provided
         if output:
             with open(output, "w", encoding="utf-8") as f:
                 f.write(result)  # pyright: ignore[reportPossiblyUnboundVariable]
 
         return result  # pyright: ignore[reportPossiblyUnboundVariable]
+
+    def _format_as_dict(self, warnings: List[str]) -> Dict[str, Any]:
+        """Convert warnings to structured dictionary.
+
+        Args:
+            warnings: List of warning strings
+
+        Returns:
+            Dict with shape, issues list, and metadata
+        """
+        issues = []
+        for warning in warnings:
+            parsed = self._parse_warning(warning)
+            issues.append(parsed)
+
+        return {"shape": list(self._df.shape), "issue_count": len(warnings), "issues": issues}
+
+    def _parse_warning(self, warning: str) -> Dict[str, Any]:
+        """Parse a warning string into structured data.
+
+        Args:
+            warning: Warning string like "[Missing Values] Column 'age': 5 missing values"
+
+        Returns:
+            Dict with check, column, severity, and message
+        """
+        # Extract check type from [brackets]
+        if "]" in warning:
+            check_type = warning.split("]")[0].replace("[", "").strip()
+            message = warning.split("]", 1)[1].strip()
+        else:
+            check_type = "Unknown"
+            message = warning
+
+        # Extract column name if present
+        column = None
+        if "Column '" in message or 'Column "' in message:
+            try:
+                if "Column '" in message:
+                    column = message.split("Column '")[1].split("'")[0]
+                else:
+                    column = message.split('Column "')[1].split('"')[0]
+            except IndexError:
+                pass
+
+        # Determine severity
+        severity = self._get_severity(warning)
+
+        return {"check": check_type, "column": column, "severity": severity, "message": message}
+
+    def _get_severity(self, warning: str) -> str:
+        """Determine severity level from warning text.
+
+        Args:
+            warning: Warning string
+
+        Returns:
+            'high', 'medium', or 'low'
+        """
+        warning_lower = warning.lower()
+
+        high_indicators = [
+            "missing values",
+            "duplicate rows",
+            "mixed types",
+            "future dates",
+            "negative values",
+        ]
+
+        medium_indicators = [
+            "outliers",
+            "whitespace",
+            "case consistency",
+            "special characters",
+            "date format",
+        ]
+
+        if any(indicator in warning_lower for indicator in high_indicators):
+            return "high"
+        elif any(indicator in warning_lower for indicator in medium_indicators):
+            return "medium"
+        else:
+            return "low"
+
+    def _format_as_csv(self, warnings: List[str]) -> str:
+        """Format warnings as CSV string.
+
+        Args:
+            warnings: List of warning strings
+
+        Returns:
+            CSV formatted string
+        """
+        from io import StringIO
+
+        output = StringIO()
+        writer = csv.writer(output)
+
+        # Write header
+        writer.writerow(["check", "column", "severity", "message"])
+
+        # Write data
+        for warning in warnings:
+            parsed = self._parse_warning(warning)
+            writer.writerow([parsed["check"], parsed["column"] or "N/A", parsed["severity"], parsed["message"]])
+
+        return output.getvalue()
