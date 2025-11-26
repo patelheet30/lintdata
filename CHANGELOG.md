@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-11-26
+
+### Added
+
+- `check_correlation_warnings`: New check to identify pairs of numerical columns with high correlation above a specified threshold.
+
 ## [0.8.0] - 2025-11-26
 
 ### Added

@@ -56,7 +56,7 @@ Switch to Pull Requests for new features and improvements.
 
 ## v0.9.0
 
-- [ ] Correlation Analysis Check
+- [x] Correlation Analysis Check
 - [ ] Documentation and Examples ready for release
 
 ## v1.0.0
