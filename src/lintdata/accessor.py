@@ -22,11 +22,69 @@ class LintAccessor:
     def __init__(self, pandas_obj: pd.DataFrame) -> None:
         self._validate(pandas_obj)
         self._df = pandas_obj
+        self._custom_checks: Dict[str, Any] = {}
 
     @staticmethod
     def _validate(obj: pd.DataFrame) -> None:
         if not isinstance(obj, pd.DataFrame):
             raise AttributeError("LintData accessor can only be used with pandas DataFrames.")
+
+    def register_check(self, check_func: Any, name: Optional[str] = None) -> None:
+        """Register a custom check function.
+
+        Custom check functions should accept a DataFrame as the first argument and return a List[str] of warning messages.
+
+        Args:
+            check_func (Any): Function that takes a DataFrame and returns List[str] of warnings.
+            name (Optional[str], optional): Name to register the check under. Defaults to None.
+
+        Raises:
+            ValueError: If check function is not callable or name already registered.
+
+        Example:
+        >>> def check_email_format(df):
+        ...     warnings = []
+        ...     for col in df.select_dtypes(include="object").columns:
+        ...         if "email" in col.lower():
+        ...             # Simple regex check for email format
+        ...             pass
+        ...     return warnings
+        >>> df.lint.register_check(check_email_format, name="email_format")
+        """
+        if not callable(check_func):
+            raise ValueError("check_func must be a callable function.")
+
+        check_name = name or check_func.__name__
+
+        if check_name in self._custom_checks:
+            raise ValueError(f"A check with the name '{check_name}' is already registered.")
+
+        self._custom_checks[check_name] = check_func
+
+    def unregister_check(self, name: str) -> None:
+        """Remove a custom check function by name.
+
+        Args:
+            name (str): Name of the custom check to remove.
+
+        Raises:
+            ValueError: If the custom check is not registered.
+
+        Example:
+        >>> df.lint.unregister_check("email_format")
+        """
+        if name not in self._custom_checks:
+            raise ValueError(f"Custom check '{name}' is not registered.")
+
+        del self._custom_checks[name]
+
+    def list_custom_checks(self) -> List[str]:
+        """List all registered custom check names.
+
+        Returns:
+            List[str]: Names of registered custom checks.
+        """
+        return list(self._custom_checks.keys())
 
     def report(
         self,
@@ -167,6 +225,16 @@ class LintAccessor:
         all_warnings: List[str] = []
         for check_name in checks_to_execute:
             all_warnings.extend(available_checks[check_name]())
+
+        for check_name, check_func in self._custom_checks.items():
+            try:
+                custom_warnings = check_func(self._df)
+                if isinstance(custom_warnings, list):
+                    all_warnings.extend(custom_warnings)
+                else:
+                    all_warnings.append(f"[Custom Check Error] '{check_name}' did not return a list of warnings.")
+            except Exception as e:
+                all_warnings.append(f"[Custom Check Error] '{check_name}' raised an exception: {e!s}")
 
         if return_dict:
             structured_data = self._format_as_dict(all_warnings)
