@@ -1055,6 +1055,8 @@ def check_date_range_anomalies(
     if df.empty:
         return warnings
 
+    if threshold_years <= 0:
+        raise ValueError("threshold_years must be a positive number.")
     if columns is None:
         datetime_columns = df.select_dtypes(include=["datetime64"]).columns.to_list()
         date_name_columns = [col for col in df.columns if "date" in col.lower() or "time" in col.lower()]
