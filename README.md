@@ -51,8 +51,8 @@ Switch to Pull Requests for new features and improvements.
 ## v0.8.0
 
 - [x] Date Range Anomalies Check
-- [ ] Performance Optimisations for Large Datasets
-- [ ] Custom Checks Framework
+- [x] Performance Optimisations for Large Datasets
+- [x] Custom Checks Framework
 
 ## v0.9.0
 
