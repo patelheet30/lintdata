@@ -1045,3 +1045,42 @@ def check_special_characters(df: pd.DataFrame, threshold: float = 0.1) -> List[s
                 f"[Special Characters] Column '{col}': {percent:.1f}% of values contain special or non-standard characters."
             )
     return warnings
+
+
+def check_date_range_anomalies(
+    df: pd.DataFrame, columns: Optional[List[str]] = None, threshold_years: float = 50
+) -> List[str]:
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if columns is None:
+        datetime_columns = df.select_dtypes(include=["datetime64"]).columns.to_list()
+        date_name_columns = [col for col in df.columns if "date" in col.lower() or "time" in col.lower()]
+        columns_to_check = list(set(datetime_columns + date_name_columns))
+    else:
+        columns_to_check = [col for col in columns if col in df.columns]
+
+    for col in columns_to_check:
+        if pd.api.types.is_datetime64_any_dtype(df[col]):
+            date_values = df[col].dropna()
+        else:
+            try:
+                date_values = pd.to_datetime(df[col], errors="coerce").dropna()
+            except Exception:
+                continue
+
+        if len(date_values) < 2:
+            continue
+
+        min_date = date_values.min()
+        max_date = date_values.max()
+        date_range_years = (max_date - min_date).days / 365.25
+
+        if date_range_years > threshold_years:
+            warnings.append(
+                f"[Date Anomaly] Column '{col}': date range spans {date_range_years:.1f} years "
+                f"({min_date.date()} to {max_date.date()})"
+            )
+    return warnings
