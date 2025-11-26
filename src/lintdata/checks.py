@@ -1111,3 +1111,41 @@ def check_date_range_anomalies(
                 f"({min_date.date()} to {max_date.date()})"
             )
     return warnings
+
+
+def check_correlation_warnings(df: pd.DataFrame, threshold: float = 0.95) -> List[str]:
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if not (0 < threshold <= 1):
+        raise ValueError("Correlation threshold must be between 0 and 1.")
+
+    numeric_df = df.select_dtypes(include=[np.number])
+
+    if len(numeric_df.columns) < 2:
+        return warnings
+
+    corr_matrix = numeric_df.corr()
+
+    checked_pairs = set()
+
+    for i, col1 in enumerate(corr_matrix.columns):
+        for j, col2 in enumerate(corr_matrix.columns):
+            if i >= j:
+                continue
+
+            pair_key = tuple(sorted([col1, col2]))
+            if pair_key in checked_pairs:
+                continue
+
+            checked_pairs.add(pair_key)
+
+            corr_value = abs(corr_matrix.loc[col1, col2])  # type: ignore
+
+            if not pd.isna(corr_value) and corr_value >= threshold:  # type: ignore
+                percent = corr_value * 100
+                warnings.append(f"[High Correlation] Columns '{col1}' and '{col2}' are {percent:.1f}% correlated.")
+
+    return warnings
