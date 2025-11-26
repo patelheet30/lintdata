@@ -1379,3 +1379,169 @@ def test_performance_all_null_columns():
 
     warnings = checks.check_outliers(df)
     assert warnings == []
+
+
+# ==== Correlation Warnings Tests ====
+
+
+def test_check_correlation_warnings_no_correlation():
+    """No correlation in independent columns."""
+    np.random.seed(42)
+    df = pd.DataFrame({"a": np.random.randn(100), "b": np.random.randn(100), "c": np.random.randn(100)})
+    warnings = checks.check_correlation_warnings(df)
+    assert warnings == []
+
+
+def test_check_correlation_warnings_detects_high_correlation():
+    """Detects highly correlated columns."""
+    df = pd.DataFrame(
+        {
+            "height_cm": [170, 180, 175, 165, 185],
+            "height_inches": [66.9, 70.9, 68.9, 65.0, 72.8],  # ~99% correlated
+        }
+    )
+    warnings = checks.check_correlation_warnings(df, threshold=0.95)
+    assert len(warnings) == 1
+    assert "height_cm" in warnings[0]
+    assert "height_inches" in warnings[0]
+    assert "correlated" in warnings[0].lower()
+
+
+def test_check_correlation_warnings_perfect_correlation():
+    """Detects perfectly correlated columns."""
+    df = pd.DataFrame(
+        {
+            "a": [1, 2, 3, 4, 5],
+            "b": [2, 4, 6, 8, 10],  # Perfect correlation (b = 2*a) or (b = c*2 - 8)
+            "c": [5, 6, 7, 8, 9],  # Perfect correlation (c = a + 4) or (c = b/2 + 4)
+        }
+    )
+    warnings = checks.check_correlation_warnings(df, threshold=0.95)
+    assert len(warnings) == 3
+    assert "'a'" in warnings[0]
+    assert "'b'" in warnings[0]
+    assert "100.0%" in warnings[0]
+
+
+def test_check_correlation_warnings_custom_threshold():
+    """Custom threshold works correctly."""
+    df = pd.DataFrame(
+        {
+            "a": [1, 2, 3, 4, 5],
+            "b": [1.2, 2.1, 2.5, 3.9, 5.2],  # ~97% correlated
+        }
+    )
+
+    # High threshold - should not trigger with 0.99
+    warnings_high = checks.check_correlation_warnings(df, threshold=0.99)
+    assert warnings_high == []
+
+    # Low threshold - should trigger with 0.90
+    warnings_low = checks.check_correlation_warnings(df, threshold=0.90)
+    assert len(warnings_low) >= 1
+
+
+def test_check_correlation_warnings_empty_dataframe():
+    """Empty DataFrame returns no warnings."""
+    df = pd.DataFrame()
+    warnings = checks.check_correlation_warnings(df)
+    assert warnings == []
+
+
+def test_check_correlation_warnings_single_numeric_column():
+    """Single numeric column returns no warnings."""
+    df = pd.DataFrame({"a": [1, 2, 3, 4, 5]})
+    warnings = checks.check_correlation_warnings(df)
+    assert warnings == []
+
+
+def test_check_correlation_warnings_no_numeric_columns():
+    """Non-numeric columns are ignored."""
+    df = pd.DataFrame({"name": ["Alice", "Bob", "Charlie"], "category": ["A", "B", "C"]})
+    warnings = checks.check_correlation_warnings(df)
+    assert warnings == []
+
+
+def test_check_correlation_warnings_with_nan():
+    """NaN values are handled correctly."""
+    df = pd.DataFrame({"a": [1, 2, np.nan, 4, 5], "b": [2, 4, np.nan, 8, 10]})
+    warnings = checks.check_correlation_warnings(df, threshold=0.95)
+    assert len(warnings) == 1
+    assert "'a'" in warnings[0]
+    assert "'b'" in warnings[0]
+
+
+def test_check_correlation_warnings_negative_correlation():
+    """Detects negative correlation (absolute value used)."""
+    df = pd.DataFrame(
+        {
+            "a": [1, 2, 3, 4, 5],
+            "b": [-2, -4, -6, -8, -10],  # Perfect negative correlation
+        }
+    )
+    warnings = checks.check_correlation_warnings(df, threshold=0.95)
+    assert len(warnings) == 1
+    assert "'a'" in warnings[0]
+    assert "'b'" in warnings[0]
+    assert "100.0%" in warnings[0]
+
+
+def test_check_correlation_warnings_multiple_pairs():
+    """Detects multiple correlated pairs."""
+    df = pd.DataFrame(
+        {
+            "a": [1, 2, 3, 4, 5],
+            "b": [2, 4, 6, 8, 10],  # Correlated with a
+            "c": [10, 20, 30, 40, 50],  # Also correlated with a and b
+            "d": [100, 101, 102, 103, 104],  # Not correlated
+        }
+    )
+    warnings = checks.check_correlation_warnings(df, threshold=0.95)
+    # Should find a-b, a-c, b-c correlations
+    assert len(warnings) >= 2
+
+
+def test_check_correlation_warnings_invalid_threshold_low():
+    """Invalid threshold (too low) raises ValueError."""
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+
+    try:
+        checks.check_correlation_warnings(df, threshold=0)
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        assert "between 0 and 1" in str(e).lower()
+
+
+def test_check_correlation_warnings_invalid_threshold_high():
+    """Invalid threshold (too high) raises ValueError."""
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+
+    try:
+        checks.check_correlation_warnings(df, threshold=1.5)
+        assert False, "Should have raised ValueError"
+    except ValueError as e:
+        assert "between 0 and 1" in str(e).lower()
+
+
+def test_check_correlation_warnings_constant_columns():
+    """Constant columns (no variance) are handled."""
+    df = pd.DataFrame({"const1": [5, 5, 5, 5], "const2": [10, 10, 10, 10], "varying": [1, 2, 3, 4]})
+    warnings = checks.check_correlation_warnings(df)
+    # Correlation with constant columns is NaN, should not cause issues
+    assert isinstance(warnings, list)
+
+
+def test_check_correlation_warnings_mixed_types():
+    """Mixed numeric and non-numeric columns work correctly."""
+    df = pd.DataFrame(
+        {
+            "height_cm": [170, 180, 175],
+            "height_inches": [66.9, 70.9, 68.9],
+            "name": ["Alice", "Bob", "Charlie"],
+            "category": ["A", "B", "C"],
+        }
+    )
+    warnings = checks.check_correlation_warnings(df, threshold=0.95)
+    assert len(warnings) == 1
+    assert "height_cm" in warnings[0]
+    assert "height_inches" in warnings[0]
