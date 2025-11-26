@@ -69,7 +69,7 @@ class LintAccessor:
             future_date_columns (Optional[List[str]], optional): Specific columns to check for future dates. Defaults to None.
             future_date_reference (Optional[str], optional): Reference date for future date check (YYYY-MM-DD). Defaults to None (today).
             special_chars_threshold (float, optional): Minimum proportion of values with special characters. Defaults to 0.1.
-            threshold_years (float, optional): Number of years to consider for date anomalies. Defaults to 50.
+            threshold_years (float, optional): Maximum acceptable date range in years. Columns with date ranges exceeding will be flagged. Defaults to 50.
             report_format (str, optional): Output format. Options: 'text', 'html', 'json', 'csv'. Defaults to 'text'.
             output (Optional[str], optional): File path to save the report. If None, returns as string. Defaults to None.
             return_dict (bool, optional): If True, returns structured dictionary instead of formatted string. Defaults to False.
