@@ -1221,3 +1221,106 @@ def test_check_special_characters_invalid_threshold():
         assert False, "Should have raised ValueError"
     except ValueError as e:
         assert "between 0 and 1" in str(e).lower()
+
+
+# ==== Date Range Anomalies Tests ====
+
+
+def test_check_date_range_anomalies_normal_range():
+    """Dates within reasonable range should pass."""
+    df = pd.DataFrame({"order_date": pd.to_datetime(["2020-01-01", "2020-06-01", "2020-12-31"])})
+    warnings = checks.check_date_range_anomalies(df)
+    assert warnings == []
+
+
+def test_check_date_range_anomalies_detects_wide_range():
+    """Detects suspiciously wide date ranges."""
+    df = pd.DataFrame({"birth_date": pd.to_datetime(["1900-01-01", "2020-01-01", "2099-12-31"])})
+    warnings = checks.check_date_range_anomalies(df)
+    assert len(warnings) == 1
+    assert "Column 'birth_date'" in warnings[0]
+    assert "wide range" in warnings[0].lower() or "anomalies" in warnings[0].lower()
+
+
+def test_check_date_range_anomalies_string_dates():
+    """Handles string date columns."""
+    df = pd.DataFrame({"date": ["1970-01-01", "2020-01-01", "2099-01-01"]})
+    warnings = checks.check_date_range_anomalies(df)
+    assert len(warnings) == 1
+    assert "Column 'date'" in warnings[0]
+
+
+def test_check_date_range_anomalies_custom_threshold():
+    """Custom threshold works correctly."""
+    df = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2000-01-01", "2030-01-01"])  # 30 years
+        }
+    )
+
+    # 30 years should be fine with default 50-year threshold
+    warnings_default = checks.check_date_range_anomalies(df)
+    assert warnings_default == []
+
+    # Should trigger with 20-year threshold
+    warnings_custom = checks.check_date_range_anomalies(df, threshold_years=20)
+    assert len(warnings_custom) == 1
+
+
+def test_check_date_range_anomalies_empty_dataframe():
+    """Empty DataFrame returns no warnings."""
+    df = pd.DataFrame()
+    warnings = checks.check_date_range_anomalies(df)
+    assert warnings == []
+
+
+def test_check_date_range_anomalies_with_nan():
+    """NaN values are ignored."""
+    df = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["1970-01-01", np.nan, "2099-01-01"])  # type: ignore
+        }
+    )
+    warnings = checks.check_date_range_anomalies(df)
+    assert len(warnings) == 1
+    assert "Column 'date'" in warnings[0]
+
+
+def test_check_date_range_anomalies_specific_columns():
+    """Only checks specified columns."""
+    df = pd.DataFrame(
+        {"date1": pd.to_datetime(["1970-01-01", "2099-01-01"]), "date2": pd.to_datetime(["2020-01-01", "2021-01-01"])}
+    )
+    warnings = checks.check_date_range_anomalies(df, columns=["date1"])
+    assert len(warnings) == 1
+    assert "date1" in warnings[0]
+    assert "date2" not in str(warnings)
+
+
+def test_check_date_range_anomalies_single_date():
+    """Single date value (no range) should pass."""
+    df = pd.DataFrame({"date": pd.to_datetime(["2020-01-01", "2020-01-01", "2020-01-01"])})
+    warnings = checks.check_date_range_anomalies(df)
+    assert warnings == []
+
+
+def test_check_date_range_anomalies_multiple_columns():
+    """Multiple columns with anomalies."""
+    df = pd.DataFrame(
+        {
+            "start_date": pd.to_datetime(["1900-01-01", "2099-01-01"]),
+            "end_date": pd.to_datetime(["1970-01-01", "2100-01-01"]),
+            "normal_date": pd.to_datetime(["2020-01-01", "2021-01-01"]),
+        }
+    )
+    warnings = checks.check_date_range_anomalies(df)
+    assert len(warnings) == 2
+    assert any("start_date" in w for w in warnings)
+    assert any("end_date" in w for w in warnings)
+
+
+def test_check_date_range_anomalies_non_datetime_ignored():
+    """Non-datetime columns are ignored."""
+    df = pd.DataFrame({"text": ["not", "a", "date"], "number": [1, 2, 3]})
+    warnings = checks.check_date_range_anomalies(df)
+    assert warnings == []

@@ -1045,3 +1045,63 @@ def check_special_characters(df: pd.DataFrame, threshold: float = 0.1) -> List[s
                 f"[Special Characters] Column '{col}': {percent:.1f}% of values contain special or non-standard characters."
             )
     return warnings
+
+
+def check_date_range_anomalies(
+    df: pd.DataFrame, columns: Optional[List[str]] = None, threshold_years: float = 50
+) -> List[str]:
+    """Check for columns where the range between the minimum and maximum dates is unusually large.
+
+    This funciton identifies date columns where the span between the earliest and latest dates exceeds a specified threshold (default: 50 years). Such
+    anomalies may indicate data entry errors, incorrect date parsing, or unexpected data distributions.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        columns (Optional[List[str]], optional): Specific columns to check. Defaults to None.
+        threshold_years (float, optional): Maximum acceptable date range in years. Columns with date ranges exceeding will be flagged. Defaults to 50.
+
+    Returns:
+        List[str]: A list of warning messages for date range anomalies.
+
+    Example:
+    >>> df = pd.DataFrame({'event_date': pd.to_datetime(['1900-01-01', '2000-01-01', '1950-06-15'])})
+    >>> warnings = check_date_range_anomalies(df, threshold_years=80)
+    >>> print(warnings[0])
+    [Date Range Anomalies] Column 'event_date': date range spans 100.0 years (1900-01-01 to 2000-01-01).
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if threshold_years <= 0:
+        raise ValueError("threshold_years must be a positive number.")
+    if columns is None:
+        datetime_columns = df.select_dtypes(include=["datetime64"]).columns.to_list()
+        date_name_columns = [col for col in df.columns if "date" in col.lower() or "time" in col.lower()]
+        columns_to_check = list(set(datetime_columns + date_name_columns))
+    else:
+        columns_to_check = [col for col in columns if col in df.columns]
+
+    for col in columns_to_check:
+        if pd.api.types.is_datetime64_any_dtype(df[col]):
+            date_values = df[col].dropna()
+        else:
+            try:
+                date_values = pd.to_datetime(df[col], errors="coerce").dropna()
+            except Exception:
+                continue
+
+        if len(date_values) < 2:
+            continue
+
+        min_date = date_values.min()
+        max_date = date_values.max()
+        date_range_years = (max_date - min_date).days / 365.25
+
+        if date_range_years > threshold_years:
+            warnings.append(
+                f"[Date Range Anomalies] Column '{col}': date range spans {date_range_years:.1f} years "
+                f"({min_date.date()} to {max_date.date()})"
+            )
+    return warnings

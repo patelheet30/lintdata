@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-11-26
+
+### Added
+
+- `check_date_range_anomalies`: New check to identify date columns with values that fall outside a specified range (e.g., too old or too recent).
+
+### Changed
+
+- Added `threshold_years` parameter to `check_date_range_anomalies` to specify the number of years for anomaly detection.
+
 ## [0.7.0] - 2025-11-21
 
 ### Added

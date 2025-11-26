@@ -43,6 +43,7 @@ class LintAccessor:
         future_date_columns: Optional[List[str]] = None,
         future_date_reference: Optional[str] = None,
         special_chars_threshold: float = 0.1,
+        threshold_years: float = 50,
         report_format: str = "text",
         output: Optional[str] = None,
         return_dict: bool = False,
@@ -55,7 +56,7 @@ class LintAccessor:
                 'unique', 'outliers', 'missing_patterns', 'case', 'cardinality', 'skewness',
                 'duplicate_columns', 'type_consistency', 'negative', 'rare_categories',
                 'date_format', 'string_length', 'zero_inflation', 'future_dates',
-                'special_chars'. Use 'all' to run all checks. Defaults to None.
+                'special_chars', 'date_anomalies'. Use 'all' to run all checks. Defaults to None.
             outlier_threshold (float, optional): Outlier detection threshold using the IQR method. Defaults to 1.5.
             skewness_threshold (float, optional): Threshold for skewness detection. Defaults to 1.0.
             rare_category_threshold (float, optional): Minimum proportion for rare categories. Defaults to 0.01.
@@ -68,6 +69,7 @@ class LintAccessor:
             future_date_columns (Optional[List[str]], optional): Specific columns to check for future dates. Defaults to None.
             future_date_reference (Optional[str], optional): Reference date for future date check (YYYY-MM-DD). Defaults to None (today).
             special_chars_threshold (float, optional): Minimum proportion of values with special characters. Defaults to 0.1.
+            threshold_years (float, optional): Maximum acceptable date range in years. Columns with date ranges exceeding will be flagged. Defaults to 50.
             report_format (str, optional): Output format. Options: 'text', 'html', 'json', 'csv'. Defaults to 'text'.
             output (Optional[str], optional): File path to save the report. If None, returns as string. Defaults to None.
             return_dict (bool, optional): If True, returns structured dictionary instead of formatted string. Defaults to False.
@@ -149,6 +151,9 @@ class LintAccessor:
                 self._df, columns=future_date_columns, reference_date=future_date_reference
             ),
             "special_chars": lambda: checks.check_special_characters(self._df, threshold=special_chars_threshold),
+            "date_anomalies": lambda: checks.check_date_range_anomalies(
+                self._df, columns=future_date_columns, threshold_years=threshold_years
+            ),
         }
 
         if checks_to_run is None:
