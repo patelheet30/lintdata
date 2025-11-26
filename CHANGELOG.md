@@ -9,6 +9,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `check_date_range_anomalies`: New check to identify date columns with values that fall outside a specified range (e.g., too old or too recent).
+- Custom Check API: Users can now register their own custom checks using the `register_check` method on the `lint` accessor. Custom checks should be functions that accept a DataFrame and return a list of warning strings.
+- Support for custom checks in the main `report()` method, allowing users to include their custom checks in the data quality audit.
+- Users can also unregister custom checks using the `unregister_check` method on the `lint` accessor.
 
 ### Changed
 
