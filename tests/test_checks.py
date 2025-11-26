@@ -1324,3 +1324,58 @@ def test_check_date_range_anomalies_non_datetime_ignored():
     df = pd.DataFrame({"text": ["not", "a", "date"], "number": [1, 2, 3]})
     warnings = checks.check_date_range_anomalies(df)
     assert warnings == []
+
+
+# ==== Performance Tests ====
+
+
+def test_performance_large_dataframe():
+    """Verify checks work on large DataFrames (basic smoke test)."""
+    # Create a reasonably large DataFrame (10K rows)
+    np.random.seed(42)
+    df = pd.DataFrame(
+        {
+            "id": range(10000),
+            "value": np.random.randn(10000),
+            "category": np.random.choice(["A", "B", "C"], 10000),
+            "text": ["test_" + str(i) for i in range(10000)],
+        }
+    )
+
+    # Should complete without errors
+    warnings = checks.check_missing_values(df)
+    assert isinstance(warnings, list)
+
+    warnings = checks.check_duplicate_rows(df)
+    assert isinstance(warnings, list)
+
+    warnings = checks.check_outliers(df)
+    assert isinstance(warnings, list)
+
+
+def test_performance_wide_dataframe():
+    """Verify checks work on wide DataFrames (many columns)."""
+    # Create DataFrame with many columns
+    df = pd.DataFrame({f"col_{i}": [1, 2, 3, 4, 5] for i in range(100)})
+
+    # Should complete without errors
+    warnings = checks.check_constant_columns(df)
+    assert isinstance(warnings, list)
+
+    warnings = checks.check_duplicate_columns(df)
+    assert isinstance(warnings, list)
+
+
+def test_performance_all_null_columns():
+    """Verify optimised handling of all-null columns."""
+    df = pd.DataFrame({"all_null": [np.nan] * 1000, "normal": list(range(1000))})
+
+    # Should handle efficiently without processing all-null column
+    warnings = checks.check_mixed_types(df)
+    assert warnings == []
+
+    warnings = checks.check_whitespace(df)
+    assert warnings == []
+
+    warnings = checks.check_outliers(df)
+    assert warnings == []

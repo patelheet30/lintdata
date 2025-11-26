@@ -56,7 +56,11 @@ def check_duplicate_rows(df: pd.DataFrame) -> List[str]:
     if df.empty:
         return warnings
 
-    duplicate_mask = df.duplicated()
+    duplicate_mask = df.duplicated(keep="first")
+
+    if not duplicate_mask.any():
+        return warnings
+
     duplicate_indices = df.index[duplicate_mask].tolist()
 
     if len(duplicate_indices) > 0:
@@ -98,10 +102,10 @@ def check_mixed_types(df: pd.DataFrame) -> List[str]:
         if len(non_null_values) == 0:
             continue
 
-        type_counts = {}
-        for value in non_null_values:
-            value_type = type(value).__name__
-            type_counts[value_type] = type_counts.get(value_type, 0) + 1
+        type_series = non_null_values.apply(type)  # type: ignore
+        type_counts = type_series.value_counts().to_dict()
+
+        type_counts = {t.__name__: count for t, count in type_counts.items()}
 
         if len(type_counts) > 1:
             total = len(non_null_values)
@@ -147,7 +151,7 @@ def check_whitespace(df: pd.DataFrame) -> List[str]:
 
         non_null_values = df[col].dropna()
 
-        has_whitespace = non_null_values.astype(str) != non_null_values.astype(str).str.strip()
+        has_whitespace = non_null_values.astype(str).str.len() != non_null_values.astype(str).str.strip().str.len()
         whitespace_count = has_whitespace.sum()
 
         if whitespace_count > 0:
@@ -283,13 +287,15 @@ def check_outliers(df: pd.DataFrame, method: Optional[str] = "iqr", threshold: O
     numeric_columns = df.select_dtypes(include=[np.number]).columns
 
     for col in numeric_columns:
+        if df[col].isna().all():
+            continue
+
         non_null_values = df[col].dropna()
 
         if len(non_null_values) == 0:
             continue
 
-        q1 = non_null_values.quantile(0.25)
-        q3 = non_null_values.quantile(0.75)
+        q1, q3 = non_null_values.quantile([0.25, 0.75])
         iqr = q3 - q1
 
         if iqr == 0:
@@ -298,8 +304,8 @@ def check_outliers(df: pd.DataFrame, method: Optional[str] = "iqr", threshold: O
         lower_bound = q1 - threshold * iqr
         upper_bound = q3 + threshold * iqr
 
-        outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)]
-        outlier_count = len(outliers)
+        outlier_mask = (df[col] < lower_bound) | (df[col] > upper_bound)
+        outlier_count = outlier_mask.sum()
 
         if outlier_count > 0:
             warnings.append(

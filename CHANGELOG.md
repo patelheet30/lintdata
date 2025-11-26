@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Added `threshold_years` parameter to `check_date_range_anomalies` to specify the number of years for anomaly detection.
+- Optimised performance of `check_duplicate_rows` to handle large DataFrames with many rows more efficiently.
+- Optimised performance of `check_mixed_types` using vectorised operations to reduce processing time on large DataFrames.
+- Optimised performance of `check_whitespace` by leveraging pandas string methods for faster detection of whitespace issues.
+- Optimised performance of `check_outliers` with reduced memory usage/allocation.
 
 ## [0.7.0] - 2025-11-21
 
