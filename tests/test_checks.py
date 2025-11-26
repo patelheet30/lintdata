@@ -1239,7 +1239,7 @@ def test_check_date_range_anomalies_detects_wide_range():
     warnings = checks.check_date_range_anomalies(df)
     assert len(warnings) == 1
     assert "Column 'birth_date'" in warnings[0]
-    assert "wide range" in warnings[0].lower() or "anomaly" in warnings[0].lower()
+    assert "wide range" in warnings[0].lower() or "anomalies" in warnings[0].lower()
 
 
 def test_check_date_range_anomalies_string_dates():

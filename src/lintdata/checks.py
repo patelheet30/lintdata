@@ -1082,7 +1082,7 @@ def check_date_range_anomalies(
 
         if date_range_years > threshold_years:
             warnings.append(
-                f"[Date Anomaly] Column '{col}': date range spans {date_range_years:.1f} years "
+                f"[Date Range Anomalies] Column '{col}': date range spans {date_range_years:.1f} years "
                 f"({min_date.date()} to {max_date.date()})"
             )
     return warnings
