@@ -14,10 +14,13 @@ def check_missing_values(df: pd.DataFrame) -> List[str]:
         List[str]: A list of warning messages describing missing values found.
 
     Example:
-    >>> df = pd.DataFrame({'a': [1, 2, None], 'b': ['x', 'y', 'z']})
-    >>> warnings = check_missing_values(df)
-    >>> print(warnings[0])
-    [Missing Values] Column 'a': 1 missing values (33.3%)
+        ```py
+        >>> df = pd.DataFrame({'a': [1, 2, None], 'b': ['x', 'y', 'z']})
+        >>> warnings = check_missing_values(df)
+        >>> print(warnings[0])
+
+        [Missing Values] Column 'a': 1 missing values (33.3%)
+        ```
     """
     warnings: List[str] = []
     missing_info = df.isna().sum()
@@ -46,10 +49,13 @@ def check_duplicate_rows(df: pd.DataFrame) -> List[str]:
         List[str]: A list of warning messages for duplicate rows with specific indices.
 
     Example:
-    >>> df = pd.DataFrame({'a': [1, 2, 2], 'b': ['x', 'y', 'y']})
-    >>> warnings = check_duplicate_rows(df)
-    >>> print(warnings[0])
-    [Duplicate Rows] Found 1 duplicate row(s) at index: 2
+        ```py
+        >>> df = pd.DataFrame({'a': [1, 2, 2], 'b': ['x', 'y', 'y']})
+        >>> warnings = check_duplicate_rows(df)
+        >>> print(warnings[0])
+
+        [Duplicate Rows] Found 1 duplicate row(s) at index: 2
+        ```
     """
     warnings: List[str] = []
 
@@ -84,10 +90,13 @@ def check_mixed_types(df: pd.DataFrame) -> List[str]:
                     type breakdowns.
 
     Example:
-    >>> df = pd.DataFrame({'a': [1, 'two', 3], 'b': [1.0, 2.0, 3.0]})
-    >>> warnings = check_mixed_types(df)
-    >>> print(warnings[0])
-    [Mixed Types] Column 'a' has mixed types: int (66%), str (33%)
+        ```py
+        >>> df = pd.DataFrame({'a': [1, 'two', 3], 'b': [1.0, 2.0, 3.0]})
+        >>> warnings = check_mixed_types(df)
+        >>> print(warnings[0])
+
+        [Mixed Types] Column 'a' has mixed types: int (66%), str (33%)
+        ```
     """
     warnings: List[str] = []
     if df.empty:
@@ -133,10 +142,13 @@ def check_whitespace(df: pd.DataFrame) -> List[str]:
                     trailing whitespace.
 
     Example:
-    >>> df = pd.DataFrame({'a': [' x', 'y ', ' z ']})
-    >>> warnings = check_whitespace(df)
-    >>> print(warnings[0])
-    [Whitespace] Column 'a' has 3 value(s) with leading or trailing whitespace.
+        ```py
+        >>> df = pd.DataFrame({'a': [' x', 'y ', ' z ']})
+        >>> warnings = check_whitespace(df)
+        >>> print(warnings[0])
+
+        [Whitespace] Column 'a' has 3 value(s) with leading or trailing whitespace.
+        ```
     """
     warnings: List[str] = []
 
@@ -174,10 +186,13 @@ def check_constant_columns(df: pd.DataFrame) -> List[str]:
         List[str]: A list of warning messages for constant columns found.
 
     Example:
-    >>> df = pd.DataFrame({'a': [1, 1, 1]})
-    >>> warnings = check_constant_columns(df)
-    >>> print(warnings[0])
-    [Constant Column] Column 'a' has only one unique value: 1.
+        ```py
+        >>> df = pd.DataFrame({'a': [1, 1, 1]})
+        >>> warnings = check_constant_columns(df)
+        >>> print(warnings[0])
+
+        [Constant Column] Column 'a' has only one unique value: 1.
+        ```
     """
     warnings: List[str] = []
 
@@ -212,10 +227,13 @@ def check_unique_columns(df: pd.DataFrame, threshold: Optional[float] = 0.95) ->
                     the unique value threshold.
 
     Example:
-    >>> df = pd.DataFrame({'a': [1, 2, 3, 4, 5]})
-    >>> warnings = check_unique_columns(df, threshold=0.8)
-    >>> print(warnings[0])
-    [Unique Column] Column 'a' is 100.0% unique
+        ```py
+        >>> df = pd.DataFrame({'a': [1, 2, 3, 4, 5]})
+        >>> warnings = check_unique_columns(df, threshold=0.8)
+        >>> print(warnings[0])
+
+        [Unique Column] Column 'a' is 100.0% unique
+        ```
     """
     warnings: List[str] = []
 
@@ -265,10 +283,13 @@ def check_outliers(df: pd.DataFrame, method: Optional[str] = "iqr", threshold: O
     Returns:
         List[str]: A list of warning messages for columns with detected outliers.
     Example:
-    >>> df = pd.DataFrame({'a': [1, 2, 3, 100, 5]})
-    >>> warnings = check_outliers(df)
-    >>> print(warnings[0])
-    [Outliers] Column 'a': 1 potential outlier(s) detected (iqr method).
+        ```py
+        >>> df = pd.DataFrame({'a': [1, 2, 3, 100, 5]})
+        >>> warnings = check_outliers(df)
+        >>> print(warnings[0])
+
+        [Outliers] Column 'a': 1 potential outlier(s) detected (iqr method).
+        ```
     """
     warnings: List[str] = []
 
@@ -331,10 +352,13 @@ def check_missing_patterns(df: pd.DataFrame, threshold: float = 0.9) -> List[str
         List[str]: A list of warning messages for columns with detected missing patterns.
 
     Example:
-    >>> df = pd.DataFrame({'age': [25, None, 30, None], 'income': [50000, None, 60000, None]})
-    >>> warnings = check_missing_patterns(df, threshold=0.8)
-    >>> print(warnings[0])
-    [Missing Patterns] Columns 'age' and 'income' identical missing rows (likely related).
+        ```py
+        >>> df = pd.DataFrame({'age': [25, None, 30, None], 'income': [50000, None, 60000, None]})
+        >>> warnings = check_missing_patterns(df, threshold=0.8)
+        >>> print(warnings[0])
+
+        [Missing Patterns] Columns 'age' and 'income' identical missing rows (likely related).
+        ```
     """
     warnings: List[str] = []
 
@@ -391,10 +415,13 @@ def check_case_consistency(df: pd.DataFrame, min_unique: int = 2) -> List[str]:
         List[str]: A list of warning messages for columns with inconsistent casing.
 
     Example:
-    >>> df = pd.DataFrame({'status': ['Active', 'active', 'Inactive', 'ACTIVE']})
-    >>> warnings = check_case_consistency(df)
-    >>> print(warnings[0])
-    [Case Consistency] Column 'status': mixed case detected (e.g., 'Active', 'active', 'ACTIVE')
+        ```py
+        >>> df = pd.DataFrame({'status': ['Active', 'active', 'Inactive', 'ACTIVE']})
+        >>> warnings = check_case_consistency(df)
+        >>> print(warnings[0])
+
+        [Case Consistency] Column 'status': mixed case detected (e.g., 'Active', 'active', 'ACTIVE')
+        ```
     """
     warnings: List[str] = []
 
@@ -454,12 +481,17 @@ def check_cardinality(df: pd.DataFrame, high_threshold: int = 50, low_threshold:
         List[str]: A list of warning messages for columns with unusual cardinality.
 
     Example:
-    >>> df = pd.DataFrame({'id': range(100), 'status': ['active'] * 100})
-    >>> warnings = check_cardinality(df, high_threshold=80, low_threshold=5)
-    >>> print(warnings[0])
-    [High Cardinality] Column 'id' has 100 unique values (100.0% unique)
-    >>> print(warnings[1])
-    [Low Cardinality] Column 'status' has only 1 unique value.
+        ```py
+        >>> df = pd.DataFrame({'id': range(100), 'status': ['active'] * 100})
+        >>> warnings = check_cardinality(df, high_threshold=80, low_threshold=5)
+        >>> print(warnings[0])
+
+        [High Cardinality] Column 'id' has 100 unique values (100.0% unique)
+
+        >>> print(warnings[1])
+
+        [Low Cardinality] Column 'status' has only 1 unique value.
+        ```
     """
     warnings: List[str] = []
 
@@ -504,10 +536,13 @@ def check_skewness(df: pd.DataFrame, threshold: float = 1.0) -> List[str]:
         List[str]: A list of warning messages for skewed columns.
 
     Example:
-    >>> df = pd.DataFrame({'a': [1, 2, 3, 100, 5]})
-    >>> warnings = check_skewness(df, threshold=1.0)
-    >>> print(warnings[0])
-    [Skewness] Column 'a' is highly right-skewed (skewness=2.5). Consider log transformation.
+        ```py
+        >>> df = pd.DataFrame({'a': [1, 2, 3, 100, 5]})
+        >>> warnings = check_skewness(df, threshold=1.0)
+        >>> print(warnings[0])
+
+        [Skewness] Column 'a' is highly right-skewed (skewness=2.5). Consider log transformation.
+        ```
     """
     warnings: List[str] = []
 
@@ -549,10 +584,13 @@ def check_duplicate_columns(df: pd.DataFrame) -> List[str]:
         List[str]: A list of warning messages for duplicate columns pairs.
 
     Example:
-    >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [4, 5, 6]})
-    >>> warnings = check_duplicate_columns(df)
-    >>> print(warnings[0])
-    [Duplicate Columns] Columns 'a' and 'b' are identical.
+        ```py
+        >>> df = pd.DataFrame({'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [4, 5, 6]})
+        >>> warnings = check_duplicate_columns(df)
+        >>> print(warnings[0])
+
+        [Duplicate Columns] Columns 'a' and 'b' are identical.
+        ```
     """
     warnings: List[str] = []
 
@@ -588,10 +626,13 @@ def check_data_type_consistency(df: pd.DataFrame) -> List[str]:
         List[str]: A list of warning messages for data type inconsistencies.
 
     Example:
-    >>> df = pd.DataFrame({'age': ['25', '30', '35']})
-    >>> warnings = check_data_type_consistency(df)
-    >>> print(warnings[0])
-    [Type Warning] Column 'age' is stored as object, consider numeric type.
+        ```py
+        >>> df = pd.DataFrame({'age': ['25', '30', '35']})
+        >>> warnings = check_data_type_consistency(df)
+        >>> print(warnings[0])
+
+        [Type Warning] Column 'age' is stored as object, consider numeric type.
+        ```
     """
     warnings: List[str] = []
 
@@ -680,10 +721,13 @@ def check_negative_values(df: pd.DataFrame, columns: Optional[List[str]] = None)
         List[str]: A list of warning messages for columns with negative values.
 
     Example:
-    >>> df = pd.DataFrame({'age': [25, -30, 35], 'income': [50000, 60000, -70000]})
-    >>> warnings = check_negative_values(df, columns=['age'])
-    >>> print(warnings[0])
-    [Negative Values] Column 'age' has 1 negative value(s).
+        ```py
+        >>> df = pd.DataFrame({'age': [25, -30, 35], 'income': [50000, 60000, -70000]})
+        >>> warnings = check_negative_values(df, columns=['age'])
+        >>> print(warnings[0])
+
+        [Negative Values] Column 'age' has 1 negative value(s).
+        ```
     """
     warnings: List[str] = []
 
@@ -726,10 +770,13 @@ def check_rare_categories(df: pd.DataFrame, threshold: float = 0.01) -> List[str
         List[str]: A list of warning messages for columns with rare categories.
 
     Example:
-    >>> df = pd.DataFrame({'category': ['A'] * 98 + ['B', 'C']})
-    >>> warnings = check_rare_categories(df, threshold=0.02)
-    >>> print(warnings[0])
-    [Rare Categories] Column 'category': 2 categories appear <2.0% of the time.
+        ```py
+        >>> df = pd.DataFrame({'category': ['A'] * 98 + ['B', 'C']})
+        >>> warnings = check_rare_categories(df, threshold=0.02)
+        >>> print(warnings[0])
+
+        [Rare Categories] Column 'category': 2 categories appear <2.0% of the time.
+        ```
     """
     warnings: List[str] = []
 
@@ -772,10 +819,13 @@ def check_date_format_consistency(df: pd.DataFrame) -> List[str]:
         List[str]: A list of warning messages for columns with inconsistent date formats.
 
     Example:
-    >>> df = pd.DataFrame({'date': ['2020-01-01', '01/02/2020', '2020-03-01']})
-    >>> warnings = check_date_format_consistency(df)
-    >>> print(warnings[0])
-    [Date Format Consistency] Column 'date' has inconsistent date formats.
+        ```py
+        >>> df = pd.DataFrame({'date': ['2020-01-01', '01/02/2020', '2020-03-01']})
+        >>> warnings = check_date_format_consistency(df)
+        >>> print(warnings[0])
+
+        [Date Format Consistency] Column 'date' has inconsistent date formats.
+        ```
     """
     warnings: List[str] = []
 
@@ -829,10 +879,13 @@ def check_string_length_outliers(df: pd.DataFrame, threshold: float = 3.0) -> Li
         List[str]: A list of warning messages for columns with string length outliers.
 
     Example:
-    >>> df = pd.DataFrame({'email': ['a@b.com', 'test@example.com', 'x' * 100 + '@example.com']})
-    >>> warnings = check_string_length_outliers(df)
-    >>> print(warnings[0])
-    [String Length Outliers] Column 'email' has 1 value(s) with unusual length
+        ```py
+        >>> df = pd.DataFrame({'email': ['a@b.com', 'test@example.com', 'x' * 100 + '@example.com']})
+        >>> warnings = check_string_length_outliers(df)
+        >>> print(warnings[0])
+
+        [String Length Outliers] Column 'email' has 1 value(s) with unusual length
+        ```
     """
     warnings: List[str] = []
 
@@ -896,10 +949,13 @@ def check_zero_inflation(df: pd.DataFrame, threshold: float = 0.5) -> List[str]:
         List[str]: A list of warning messages for columns with excessive zero values.
 
     Example:
-    >>> df = pd.DataFrame({'purchases': [0, 0, 0, 0, 0, 100, 200]})
-    >>> warnings = check_zero_inflation(df, threshold=0.5)
-    >>> print(warnings[0])
-    [Zero Inflation] Column 'purchases': 71.4% of values are zero
+        ```py
+        >>> df = pd.DataFrame({'purchases': [0, 0, 0, 0, 0, 100, 200]})
+        >>> warnings = check_zero_inflation(df, threshold=0.5)
+        >>> print(warnings[0])
+
+        [Zero Inflation] Column 'purchases': 71.4% of values are zero
+        ```
     """
     warnings: List[str] = []
 
@@ -948,10 +1004,13 @@ def check_future_dates(
         List[str]: A list of warning messages for future dates.
 
     Example:
-    >>> df = pd.DataFrame({'birth_date': pd.to_datetime(['1990-01-01', '2050-01-01', '1985-06-15'])})
-    >>> warnings = check_future_dates(df)
-    >>> print(warnings[0])
-    [Future Dates] Column 'birth_date' has 1 date(s) in the future compared to 2024-06-01.
+        ```py
+        >>> df = pd.DataFrame({'birth_date': pd.to_datetime(['1990-01-01', '2050-01-01', '1985-06-15'])})
+        >>> warnings = check_future_dates(df)
+        >>> print(warnings[0])
+
+        [Future Dates] Column 'birth_date' has 1 date(s) in the future compared to 2024-06-01.
+        ```
     """
     warnings: List[str] = []
 
@@ -1013,10 +1072,13 @@ def check_special_characters(df: pd.DataFrame, threshold: float = 0.1) -> List[s
         List[str]: A list of warning messages for special characters.
 
     Example:
-    >>> df = pd.DataFrame({'name': ['Alice', 'Bobâ„¢', 'Charlieâ€¢']})
-    >>> warnings = check_special_characters(df)
-    >>> print(warnings[0])
-    [Special Characters] Column 'name': 66.7% of values contain special or non-standard characters.
+        ```py
+        >>> df = pd.DataFrame({'name': ['Alice', 'Bobâ„¢', 'Charlieâ€¢']})
+        >>> warnings = check_special_characters(df)
+        >>> print(warnings[0])
+
+        [Special Characters] Column 'name': 66.7% of values contain special or non-standard characters.
+        ```
     """
     warnings: List[str] = []
 
@@ -1070,10 +1132,13 @@ def check_date_range_anomalies(
         List[str]: A list of warning messages for date range anomalies.
 
     Example:
-    >>> df = pd.DataFrame({'event_date': pd.to_datetime(['1900-01-01', '2000-01-01', '1950-06-15'])})
-    >>> warnings = check_date_range_anomalies(df, threshold_years=80)
-    >>> print(warnings[0])
-    [Date Range Anomalies] Column 'event_date': date range spans 100.0 years (1900-01-01 to 2000-01-01).
+        ```py
+        >>> df = pd.DataFrame({'event_date': pd.to_datetime(['1900-01-01', '2000-01-01', '1950-06-15'])})
+        >>> warnings = check_date_range_anomalies(df, threshold_years=80)
+        >>> print(warnings[0])
+
+        [Date Range Anomalies] Column 'event_date': date range spans 100.0 years (1900-01-01 to 2000-01-01).
+        ```
     """
     warnings: List[str] = []
 
@@ -1114,6 +1179,27 @@ def check_date_range_anomalies(
 
 
 def check_correlation_warnings(df: pd.DataFrame, threshold: float = 0.95) -> List[str]:
+    """Check correlation between numeric columns.
+
+    Identifies pairs of numeric columns that have a high correlation (above the specified threshold), which may indicate redundancy or multicollinearity issues.
+
+    Args:
+        df (pd.DataFrame): The pandas DataFrame to check.
+        threshold (float, optional): Correlation threshold above which warnings are generated. Defaults to 0.95.
+
+    Raises:
+        ValueError: If the threshold is not between 0 and 1.
+    Returns:
+        List[str]: A list of warning messages for highly correlated column pairs.
+    Example:
+        ```py
+        >>> df = pd.DataFrame({'a': [1, 2, 3, 4, 5], 'b': [2, 4, 6, 8, 10], 'c': [5, 4, 3, 2, 1]})
+        >>> warnings = check_correlation_warnings(df, threshold=0.9)
+        >>> print(warnings[0])
+
+        [High Correlation] Columns 'a' and 'b' are 100.0% correlated.
+        ```
+    """
     warnings: List[str] = []
 
     if df.empty:

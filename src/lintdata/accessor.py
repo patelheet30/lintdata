@@ -42,14 +42,16 @@ class LintAccessor:
             ValueError: If check function is not callable or name already registered.
 
         Example:
-        >>> def check_email_format(df):
-        ...     warnings = []
-        ...     for col in df.select_dtypes(include="object").columns:
-        ...         if "email" in col.lower():
-        ...             # Simple regex check for email format
-        ...             pass
-        ...     return warnings
-        >>> df.lint.register_check(check_email_format, name="email_format")
+            ```py
+            >>> def check_email_format(df):
+            ...     warnings = []
+            ...     for col in df.select_dtypes(include="object").columns:
+            ...         if "email" in col.lower():
+            ...             # Simple regex check for email format
+            ...             pass
+            ...     return warnings
+            >>> df.lint.register_check(check_email_format, name="email_format")
+            ```
         """
         if not callable(check_func):
             raise ValueError("check_func must be a callable function.")
@@ -71,7 +73,9 @@ class LintAccessor:
             ValueError: If the custom check is not registered.
 
         Example:
-        >>> df.lint.unregister_check("email_format")
+            ```py
+            >>> df.lint.unregister_check("email_format")
+            ```
         """
         if name not in self._custom_checks:
             raise ValueError(f"Custom check '{name}' is not registered.")
@@ -142,6 +146,7 @@ class LintAccessor:
                 or a structured dictionary if return_dict=True.
 
         Example:
+            ```py
             >>> # Text report
             >>> report = df.lint.report()
 
@@ -156,6 +161,7 @@ class LintAccessor:
 
             >>> # Get structured data
             >>> data = df.lint.report(return_dict=True)
+            ```
         """
         valid_formats = ["text", "html", "json", "csv"]
         if report_format not in valid_formats:
