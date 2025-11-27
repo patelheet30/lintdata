@@ -19,7 +19,7 @@ For the latest development version:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/lintdata.git
+git clone https://github.com/patelheet30/lintdata.git
 cd lintdata
 
 # Install with uv (recommended)
