@@ -5,7 +5,7 @@ Implements the core LintData accessor for pandas Dataframes
 import csv
 import json
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -107,6 +107,7 @@ class LintAccessor:
         special_chars_threshold: float = 0.1,
         threshold_years: float = 50,
         correlation_threshold: float = 0.95,
+        foreign_key_mappings: Optional[Dict[str, Union[pd.DataFrame, Tuple[pd.DataFrame, str]]]] = None,
         report_format: str = "text",
         output: Optional[str] = None,
         return_dict: bool = False,
@@ -119,7 +120,7 @@ class LintAccessor:
                 'unique', 'outliers', 'missing_patterns', 'case', 'cardinality', 'skewness',
                 'duplicate_columns', 'type_consistency', 'negative', 'rare_categories',
                 'date_format', 'string_length', 'zero_inflation', 'future_dates',
-                'special_chars', 'date_anomalies', 'correlation'. Use 'all' to run all checks. Defaults to None.
+                'special_chars', 'date_anomalies', 'correlation', 'foreign_keys'. Use 'all' to run all checks. Defaults to None.
             outlier_threshold (float, optional): Outlier detection threshold using the IQR method. Defaults to 1.5.
             skewness_threshold (float, optional): Threshold for skewness detection. Defaults to 1.0.
             rare_category_threshold (float, optional): Minimum proportion for rare categories. Defaults to 0.01.
@@ -134,6 +135,9 @@ class LintAccessor:
             special_chars_threshold (float, optional): Minimum proportion of values with special characters. Defaults to 0.1.
             threshold_years (float, optional): Maximum acceptable date range in years. Columns with date ranges exceeding will be flagged. Defaults to 50.
             correlation_threshold (float, optional): Threshold for flagging highly correlated columns. Defaults to 0.95.
+            foreign_key_mappings (Optional[Dict[str, Union[pd.DataFrame, Tuple[pd.DataFrame, str]]]], optional):
+                Mappings for referential integrity checks. Key: foreign key column in the DataFrame.
+                Value: either parent DataFrame (assumes first column is referenced) or tuple of (parent_df, parent_column_name). Defaults to None.
             report_format (str, optional): Output format. Options: 'text', 'html', 'json', 'csv'. Defaults to 'text'.
             output (Optional[str], optional): File path to save the report. If None, returns as string. Defaults to None.
             return_dict (bool, optional): If True, returns structured dictionary instead of formatted string. Defaults to False.
@@ -221,6 +225,7 @@ class LintAccessor:
                 self._df, columns=future_date_columns, threshold_years=threshold_years
             ),
             "correlation": lambda: checks.check_correlation_warnings(self._df, threshold=correlation_threshold),
+            "foreign_keys": lambda: checks.check_referential_integrity(self._df, foreign_key_mappings or {}),
         }
 
         if checks_to_run is None:

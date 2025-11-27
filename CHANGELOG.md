@@ -4,11 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.9.0] - 2025-11-26
+## [1.0.0] - 2025-11-27
+
+### Added
+
+- `check_referential_integrity`: New check to identify foreign key violations between DataFrames.
+
+### Changed
+
+- Updated `report()` method to include `foreign_key_mappings` parameter for referential integrity checks.
+
+This marks the first stable release of LintData.
+
+## [0.9.0] - 2025-11-26 - 2025-11-27
 
 ### Added
 
 - `check_correlation_warnings`: New check to identify pairs of numerical columns with high correlation above a specified threshold.
+- Added documentation via MkDocs and MkDocs Material theme. Using mkdocstrings-python for API reference generation.
 
 ## [0.8.0] - 2025-11-26
 

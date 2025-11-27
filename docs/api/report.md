@@ -32,6 +32,7 @@ def report(
     special_chars_threshold: float = 0.1,
     threshold_years: float = 50,
     correlation_threshold: float = 0.95,
+    foreign_key_mappings: Optional[Dict[str, Union[pd.DataFrame, Tuple[pd.DataFrame, str]]]] = None,
     report_format: str = "text",
     output: Optional[str] = None,
     return_dict: bool = False,
@@ -48,7 +49,7 @@ def report(
 
 **Available check names:**
 
-`missing`, `duplicates`, `mixed_types`, `whitespace`, `constant`, `unique`, `outliers`, `missing_patterns`, `case`, `cardinality`, `skewness`, `duplicate_columns`, `type_consistency`, `negative`, `rare_categories`, `date_format`, `string_length`, `zero_inflation`, `future_dates`, `special_chars`, `date_anomalies`, `correlation`
+`missing`, `duplicates`, `mixed_types`, `whitespace`, `constant`, `unique`, `outliers`, `missing_patterns`, `case`, `cardinality`, `skewness`, `duplicate_columns`, `type_consistency`, `negative`, `rare_categories`, `date_format`, `string_length`, `zero_inflation`, `future_dates`, `special_chars`, `date_anomalies`, `correlation`, `foreign_keys`.
 
 ### Threshold Parameters
 
@@ -65,6 +66,7 @@ def report(
 | `special_chars_threshold`    | `float` | `0.1`   | Minimum proportion of special characters (10%)         |
 | `threshold_years`            | `float` | `50`    | Maximum acceptable date range in years                 |
 | `correlation_threshold`      | `float` | `0.95`  | Minimum correlation to flag (95%)                      |
+| `foreign_key_mappings`       | `Dict`  | `None`  | Referential integrity mappings for foreign key checks  |
 
 ### Column-Specific Parameters
 

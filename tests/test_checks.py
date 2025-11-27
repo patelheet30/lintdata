@@ -1545,3 +1545,143 @@ def test_check_correlation_warnings_mixed_types():
     assert len(warnings) == 1
     assert "height_cm" in warnings[0]
     assert "height_inches" in warnings[0]
+
+
+"""Tests for referential integrity check."""
+
+
+def test_basic_referential_integrity():
+    """Test basic foreign key validation."""
+    # Parent table
+    users = pd.DataFrame({"user_id": [1, 2, 3, 4, 5]})
+
+    # Child table - all valid references
+    orders = pd.DataFrame({"order_id": [101, 102, 103], "user_id": [1, 2, 3]})
+
+    warnings = checks.check_referential_integrity(orders, {"user_id": users})
+    assert len(warnings) == 0
+
+
+def test_missing_foreign_keys():
+    """Test detection of missing foreign key values."""
+    users = pd.DataFrame({"user_id": [1, 2, 3]})
+    orders = pd.DataFrame(
+        {"order_id": [101, 102, 103, 104], "user_id": [1, 2, 5, 9]}  # 5 and 9 don't exist
+    )
+
+    warnings = checks.check_referential_integrity(orders, {"user_id": users})
+    assert len(warnings) == 1
+    assert "user_id" in warnings[0]
+    assert "2 values not found" in warnings[0] or "2 missing references" in warnings[0]
+
+
+def test_multiple_foreign_keys():
+    """Test validation across multiple foreign key relationships."""
+    users = pd.DataFrame({"user_id": [1, 2, 3]})
+    products = pd.DataFrame({"product_id": [10, 20, 30]})
+
+    orders = pd.DataFrame(
+        {
+            "order_id": [101, 102, 103],
+            "user_id": [1, 2, 5],  # 5 missing
+            "product_id": [10, 99, 30],  # 99 missing
+        }
+    )
+
+    warnings = checks.check_referential_integrity(orders, {"user_id": users, "product_id": products})
+
+    assert len(warnings) == 2
+    assert any("user_id" in w for w in warnings)
+    assert any("product_id" in w for w in warnings)
+
+
+def test_all_valid_references():
+    """Test when all foreign keys are valid."""
+    departments = pd.DataFrame({"dept_id": [1, 2, 3]})
+    employees = pd.DataFrame(
+        {"emp_id": [101, 102, 103], "dept_id": [1, 2, 3]}  # All valid
+    )
+
+    warnings = checks.check_referential_integrity(employees, {"dept_id": departments})
+    assert len(warnings) == 0
+
+
+def test_empty_child_dataframe():
+    """Test with empty child DataFrame."""
+    users = pd.DataFrame({"user_id": [1, 2, 3]})
+    orders = pd.DataFrame({"order_id": [], "user_id": []})
+
+    warnings = checks.check_referential_integrity(orders, {"user_id": users})
+    assert len(warnings) == 0
+
+
+def test_empty_parent_dataframe():
+    """Test with empty parent DataFrame."""
+    users = pd.DataFrame({"user_id": []})
+    orders = pd.DataFrame({"order_id": [101, 102], "user_id": [1, 2]})
+
+    warnings = checks.check_referential_integrity(orders, {"user_id": users})
+    assert len(warnings) == 1
+    assert "user_id" in warnings[0]
+    assert "2" in warnings[0]
+
+
+def test_nan_values_in_foreign_key():
+    """Test handling of NaN values in foreign key column."""
+    users = pd.DataFrame({"user_id": [1, 2, 3]})
+    orders = pd.DataFrame({"order_id": [101, 102, 103], "user_id": [1, float("nan"), 5]})
+
+    warnings = checks.check_referential_integrity(orders, {"user_id": users})
+    # NaN should be excluded from validation (common in SQL - nullable FKs)
+    assert len(warnings) == 1
+    assert "1 value" in warnings[0] or "1 missing" in warnings[0]  # Only value 5
+
+
+def test_custom_reference_column_name():
+    """Test when parent table has different column name."""
+    # Parent table has 'id' column
+    users = pd.DataFrame({"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"]})
+
+    # Child table references it as 'user_id'
+    orders = pd.DataFrame({"order_id": [101, 102], "user_id": [1, 5]})
+
+    # Pass parent column explicitly
+    warnings = checks.check_referential_integrity(orders, {"user_id": (users, "id")})
+    assert len(warnings) == 1
+    assert "user_id" in warnings[0]
+
+
+def test_no_foreign_keys_specified():
+    """Test with empty foreign_keys dictionary."""
+    orders = pd.DataFrame({"order_id": [101, 102], "user_id": [1, 2]})
+
+    warnings = checks.check_referential_integrity(orders, {})
+    assert len(warnings) == 0
+
+
+def test_nonexistent_foreign_key_column():
+    """Test when specified foreign key column doesn't exist in child DataFrame."""
+    users = pd.DataFrame({"user_id": [1, 2, 3]})
+    orders = pd.DataFrame({"order_id": [101, 102]})  # No user_id column
+
+    # Check if KeyError is raised
+    try:
+        checks.check_referential_integrity(orders, {"user_id": users})
+        assert False, "Should have raised KeyError"
+    except KeyError as e:
+        assert "user_id" in str(e)
+
+
+def test_large_dataset_performance():
+    """Test performance with larger datasets."""
+    users = pd.DataFrame({"user_id": range(10000)})
+    orders = pd.DataFrame(
+        {
+            "order_id": range(5000),
+            "user_id": [i % 10000 if i < 4990 else 99999 for i in range(5000)],
+        }
+    )
+
+    warnings = checks.check_referential_integrity(orders, {"user_id": users})
+    assert len(warnings) == 1
+    assert "1 values not found" in warnings[0] or "1 missing" in warnings[0]
