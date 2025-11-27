@@ -1,69 +1,129 @@
-# ROADMAP
+# LintData
 
-## v0.1.0
+<div align="center">
 
-- [x] Missing Values Check
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/) [![Licence: MIT](https://img.shields.io/badge/Licence-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![CI](https://github.com/patelheet30/lintdata/actions/workflows/ci.yml/badge.svg)](https://github.com/patelheet30/lintdata/actions/workflows/ci.yml)
 
-## v0.2.0
+</div>
+A "linter" for pandas DataFrames to automate data quality audits.
 
-- [x] Duplicate Rows Check
-- [x] Mixed Data Types Check
-- [x] Whitespace Check
+## Installation
 
-## v0.3.0
+You can install LintData via pip:
 
-- [x] Constant Columns Check
-- [x] Unique Values Check
+```bash
+pip install lintdata
+```
 
-## v0.4.0
+Via UV:
 
-- [x] Outlier Detection Check (IQR Method)
-- [x] Missing Patterns Check
-- [x] Case Consistency Check
+```bash
+uv add lintdata
+```
 
-## v0.5.0
+Or install from source:
 
-- [x] Cardinality Check
-- [x] Skewness Check
-- [x] Duplicate Columns Check
-- [x] Data type consistency Check
+```bash
+git clone https://github.com/patelheet30/lintdata.git
+cd lintdata
+pip install -e .
+```
 
-At this point, the library will be feature-complete for most data quality auditing needs.
+## Features
 
-## v0.6.0
+✅ **20+ Data Quality Checks** - Missing values, duplicates, outliers, type consistency, and more  
+✅ **Zero Configuration** - Works out of the box with sensible defaults  
+✅ **Highly Configurable** - Customize thresholds and select specific checks  
+✅ **Multiple Export Formats** - Text, HTML, JSON, and CSV reports  
+✅ **Custom Checks API** - Extend with your own validation logic  
+✅ **Pandas Native** - Integrates seamlessly via `.lint` accessor
 
-- [x] Negative Values Check
-- [x] Infrequent category detection (Rare Categories Check)
-- [x] Date Format Consistency Check
-- [x] String Length Outliers Checks
-- [x] Configuration System (Custom thresholds, select checks to run, etc.)
+## Quick Start
 
-Switch to Pull Requests for new features and improvements.
+```python
+import pandas as pd
+import lintdata
 
-## v0.7.0
+# Load your DataFrame
+df = pd.read_csv("your_data.csv")
 
-- [x] Zero Inflated Columns Check
-- [x] Future Dates Check
-- [x] Special Characters Check (Encoding Issues)
-- [x] HTML Reports
-- [x] Export Options (JSON, CSV, etc.)
+# Run quality checks
+report = df.lint.report()
+print(report)
+```
 
-## v0.8.0
+**Example Output:**
 
-- [x] Date Range Anomalies Check
-- [x] Performance Optimisations for Large Datasets
-- [x] Custom Checks Framework
+```
+--- LintData Quality Report ---
+Shape: (1000, 8)
 
-## v0.9.0
+Running Checks:
+Found 5 issue(s):
+  1. [Missing Values] Column 'age': 45 missing values (4.5%)
+  2. [Duplicates] Found 12 duplicate rows (1.2% of data)
+  3. [Outliers] Column 'salary': 8 potential outliers detected (IQR method)
+  4. [Mixed Types] Column 'phone' contains both numeric and string values
+  5. [High Cardinality] Column 'user_id' has 987 unique values (98.7%)
 
-- [x] Correlation Analysis Check
-- [x] Documentation ready for release
+--- End of Report ---
+```
 
-## v1.0.0
+## Available Checks
 
-- [ ] Multi-table validation
-- [ ] PyPi release
+LintData includes 22+ built-in checks across multiple categories:
 
-## Future Ideas (Post v1.0.0)
+- **Missing Data**: Missing values, missing patterns
+- **Duplicates**: Duplicate rows, duplicate columns
+- **Data Types**: Mixed types, type consistency
+- **Statistical**: Outliers, skewness, correlation warnings
+- **Categorical**: Cardinality, rare categories, case consistency
+- **Numerical**: Negative values, zero inflation
+- **Strings**: Whitespace, special characters, length outliers
+- **Dates**: Format consistency, future dates, date range anomalies
+- **Multi-table**: Referential integrity (foreign key validation)
 
-- [ ] Examples and Tutorials
+## Export Formats
+
+Save reports in multiple formats:
+
+```python
+# HTML report with visualizations
+df.lint.report(report_format='html', output='report.html')
+
+# JSON for programmatic access
+df.lint.report(report_format='json', output='report.json')
+
+# CSV for spreadsheet analysis
+df.lint.report(report_format='csv', output='issues.csv')
+```
+
+## Custom Checks
+
+Extend LintData with your own validation logic:
+
+```python
+def check_email_format(df):
+    """Validate email addresses."""
+    warnings = []
+    for col in df.select_dtypes(include='object').columns:
+        if 'email' in col.lower():
+            invalid = df[~df[col].str.contains('@', na=False)]
+            if len(invalid) > 0:
+                warnings.append(f"[Email] Column '{col}': {len(invalid)} invalid emails")
+    return warnings
+
+# Register and use
+df.lint.register_check(check_email_format)
+df.lint.report()
+```
+
+## Documentation
+
+Full documentation available at: [LintData Documentation](https://lintdata.patelheet.com)
+
+## Issues and Support
+
+For general help or to report bugs, please open an issue on GitHub: [LintData Issues](https://github.com/patelheet30/lintdata/issues).
+
+If you have questions or need assistance, feel free to reach out via Discord: patelheet30
