@@ -1,0 +1,81 @@
+site_name: LintData
+site_description: A "linter" for pandas DataFrames to automate data quality audits.
+site_author: Heet Patel
+copyright: Copyright &copy; 2025 Heet Patel
+
+repo_name: "patelheet30/lintdata"
+repo_url: "https://github.com/patelheet30/lintdata"
+
+theme:
+  name: material
+  font:
+    code: JetBrains Mono
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            heading_level: 2
+            show_symbol_type_toc: true
+            show_symbol_type_heading: true
+            merge_init_into_class: true
+
+markdown_extensions: 
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - tables
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+  - User Guide:
+    - Available Checks: user-guide/available_checks.md
+    - Custom Checks: user-guide/custom_checks.md
+  - API Reference:
+    - Checks Module: api/checks.md
+    - Accessor: api/accessor.md
+    - Report: api/report.md
+  - Changelog: changelog/CHANGELOG.md
+
+watch:
+  - src
+  - docs
