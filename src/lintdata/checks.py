@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -1233,5 +1233,88 @@ def check_correlation_warnings(df: pd.DataFrame, threshold: float = 0.95) -> Lis
             if not pd.isna(corr_value) and corr_value >= threshold:  # type: ignore
                 percent = corr_value * 100
                 warnings.append(f"[High Correlation] Columns '{col1}' and '{col2}' are {percent:.1f}% correlated.")
+
+    return warnings
+
+
+def check_referential_integrity(
+    df: pd.DataFrame,
+    foreign_keys: Dict[str, Union[pd.DataFrame, Tuple[pd.DataFrame, str]]],
+) -> List[str]:
+    """Check if foreing key values exist in their referenced parent tables.
+
+    This function validates referential integrity by checking whether values in specified foreign key columns exist in their corresponding
+    parent tables. This is essential for multi-table data validation and ensures consistency across related datasets.
+
+    Args:
+        df (pd.DataFrame): The child DataFrame containing foreign key column(s) to validate.
+        foreign_keys (Dict[str, Union[pd.DataFrame, Tuple[pd.DataFrame, str]]]): Dictionary mapping foreign key column names to their parent tables.
+            Key: Name of the foreign key column in `df`.
+            Value: Either
+                a parent DataFrame (assumes the first column is the referenced column), or
+                a tuple of (parent_df, parent_column_name) for explicit column reference.
+
+    Raises:
+        KeyError: If a foreign key column or parent column is not found in the child DataFrame or parent DataFrame respectively.
+
+    Returns:
+        List[str]: A list of warning messages for foreign key violations.
+
+    Notes:
+        - Null values in foreign key columns are ignored.
+        - Only checks for existence; does not validate other constraints (e.g., cascading deletes).
+
+    Example:
+        ```py
+        >>> users = pd.DataFrame({'user_id': [1, 2, 3]})
+        >>> orders = pd.DataFrame({'order_id': [101, 102, 103], 'user_id': [1, 2, 4]})
+        >>> warnings = check_referential_integrity(orders, {'user_id': users})
+        >>> print(warnings[0])
+
+        [Referential Integrity] Column 'user_id': 1 values not found in parent column 'user_id' (33.3% of non-null values).
+        ```
+    """
+    warnings: List[str] = []
+
+    if df.empty:
+        return warnings
+
+    if not foreign_keys:
+        return warnings
+
+    for fk_column, parent_ref in foreign_keys.items():
+        if isinstance(parent_ref, tuple):
+            parent_df, parent_column = parent_ref
+        else:
+            parent_df = parent_ref
+            parent_column = parent_df.columns[0]
+
+        if fk_column not in df.columns:
+            raise KeyError(
+                f"Foreign key column '{fk_column}' not found in DataFrame. Available columns: {df.columns.tolist()}"
+            )
+
+        if parent_column not in parent_df.columns:
+            raise KeyError(
+                f"Parent column '{parent_column}' not found in parent DataFrame. Available columns: {parent_df.columns.tolist()}"
+            )
+
+        fk_values = df[fk_column].dropna()
+
+        if len(fk_values) == 0:
+            continue
+
+        parent_values = set(parent_df[parent_column].dropna())
+
+        invalid_fk_values = set(fk_values) - parent_values
+
+        if invalid_fk_values:
+            num_invalid = len(invalid_fk_values)
+            pot_invalid = (num_invalid / len(fk_values)) * 100
+
+            warnings.append(
+                f"[Referential Integrity] Column '{fk_column}': {num_invalid} values not found in parent column '{parent_column}' "
+                f"({pot_invalid:.1f}% of non-null values)."
+            )
 
     return warnings
