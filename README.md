@@ -58,9 +58,12 @@ Switch to Pull Requests for new features and improvements.
 
 - [x] Correlation Analysis Check
 - [x] Documentation ready for release
-- [ ] Examples and Tutorials
 
 ## v1.0.0
 
 - [ ] Multi-table validation
 - [ ] PyPi release
+
+## Future Ideas (Post v1.0.0)
+
+- [ ] Examples and Tutorials

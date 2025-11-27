@@ -1,6 +1,7 @@
 site_name: LintData
 site_description: A "linter" for pandas DataFrames to automate data quality audits.
 site_author: Heet Patel
+site_url: https://lintdata.patelheet.com
 copyright: Copyright &copy; 2025 Heet Patel
 
 repo_name: "patelheet30/lintdata"
