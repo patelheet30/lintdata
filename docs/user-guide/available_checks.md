@@ -338,6 +338,29 @@ df.lint.report(
 [Date Range Anomalies] Column 'event_date': date range spans 129.0 years (1900-01-01 to 2029-12-31)
 ```
 
+## Referential Integrity (1 check)
+
+### Foreign Key Validation
+
+Ensures foreign key relationships are valid.
+
+```python
+df.lint.report(
+    checks_to_run=["foreign_keys"],
+    foreign_key_mappings={
+        "customer_id": customers_df,
+        "product_id": (products_df, "product_id")
+    }
+)
+```
+
+**Example Output:**
+
+```
+[Foreign Key Violation] Column 'customer_id': 15 value(s) not found in referenced table
+
+```
+
 ## Check Categories Summary
 
 | Category     | Checks | Use Case                |
@@ -351,6 +374,7 @@ df.lint.report(
 | Numerical    | 1      | Value validation        |
 | Categorical  | 1      | Category analysis       |
 | Dates        | 3      | Temporal validation     |
+| Referential  | 1      | Foreign key integrity   |
 
 ## Running Multiple Checks
 

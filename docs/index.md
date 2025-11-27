@@ -14,7 +14,7 @@ LintData helps data scientists, analysts, and ML engineers identify data quality
 
 ## Features
 
-✅ **22+ Data Quality Checks** - Missing values, duplicates, outliers, type consistency, and more  
+✅ **20+ Data Quality Checks** - Missing values, duplicates, outliers, type consistency, and more  
 ✅ **Zero Configuration** - Works out of the box with sensible defaults  
 ✅ **Highly Configurable** - Customise thresholds and select specific checks  
 ✅ **Multiple Export Formats** - Text, HTML, JSON, and CSV reports  

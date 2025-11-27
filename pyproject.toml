@@ -1,13 +1,13 @@
 [project]
 name = "lintdata"
-version = "0.9.0"
+version = "1.0.0"
 description = "A \"linter\" for pandas DataFrames to automate data quality audits."
 readme = "README.md"
 authors = [{ name = "Heet Patel", email = "heetkpatel30@gmail.com" }]
 license = { file = "LICENSE" }
 requires-python = ">=3.13"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
@@ -38,6 +38,10 @@ docs = [
     "mkdocstrings>=0.30.1",
     "mkdocstrings-python>=1.19.0",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
 
 [tool.ruff]
 lint.select = ["E", "F", "I", "N", "Q", "RSE", "SIM", "RUF"]

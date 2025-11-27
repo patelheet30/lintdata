@@ -3,13 +3,17 @@
 The `LintAccessor` class provides the `.lint` accessor for pandas DataFrames.
 
 ::: lintdata.accessor.LintAccessor
-options:
-show_root_heading: true
-show_source: false
-members: - report - register_check - unregister_check - list_custom_checks
-group_by_category: true
-show_signature_annotations: true
-separate_signature: true
+    options:
+        show_root_heading: true
+        show_source: false
+        members: 
+            - report 
+            - register_check 
+            - unregister_check 
+            - list_custom_checks
+        group_by_category: true
+        show_signature_annotations: true
+        separate_signature: true
 
 ## Usage Examples
 
@@ -110,7 +114,7 @@ result = validate_dataset(df, config)
 ### Check Selection
 
 - `checks_to_run`: List of check names or `"all"`
-- Available checks: `missing`, `duplicates`, `mixed_types`, `whitespace`, `constant`, `unique`, `outliers`, `missing_patterns`, `case`, `cardinality`, `skewness`, `duplicate_columns`, `type_consistency`, `negative`, `rare_categories`, `date_format`, `string_length`, `zero_inflation`, `future_dates`, `special_chars`, `date_anomalies`, `correlation`
+- Available checks: `missing`, `duplicates`, `mixed_types`, `whitespace`, `constant`, `unique`, `outliers`, `missing_patterns`, `case`, `cardinality`, `skewness`, `duplicate_columns`, `type_consistency`, `negative`, `rare_categories`, `date_format`, `string_length`, `zero_inflation`, `future_dates`, `special_chars`, `date_anomalies`, `correlation`, `foreign_keys`
 
 ### Threshold Parameters
 
@@ -125,6 +129,8 @@ result = validate_dataset(df, config)
 - `special_chars_threshold` (float): Special char proportion (default: 0.1)
 - `threshold_years` (float): Date range threshold in years (default: 50)
 - `correlation_threshold` (float): Correlation threshold (default: 0.95)
+- `foreign_key_mappings` (Dict[str, Union[pd.DataFrame, Tuple[pd.DataFrame, str]]]): Referential integrity mappings
+
 
 ### Column-Specific Parameters
 

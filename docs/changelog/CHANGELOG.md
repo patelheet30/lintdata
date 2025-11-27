@@ -7,6 +7,18 @@ hide:
 
 All notable changes to this project will be documented in this file.
 
+## v1.0.0
+
+### Added
+
+- `check_referential_integrity`: New check to identify foreign key violations between DataFrames.
+
+### Changed
+
+- Updated `report()` method to include `foreign_key_mappings` parameter for referential integrity checks.
+
+This marks the first stable release of LintData.
+
 ## v0.9.0
 
 ### Added
