@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/) [![Licence: MIT](https://img.shields.io/badge/Licence-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![CI](https://github.com/patelheet30/lintdata/actions/workflows/ci.yml/badge.svg)](https://github.com/patelheet30/lintdata/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/lintdata)](https://pypi.org/project/lintdata) [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/) [![Licence: MIT](https://img.shields.io/badge/Licence-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![CI](https://github.com/patelheet30/lintdata/actions/workflows/ci.yml/badge.svg)](https://github.com/patelheet30/lintdata/actions/workflows/ci.yml)
 
 </div>
 A "linter" for pandas DataFrames to automate data quality audits.

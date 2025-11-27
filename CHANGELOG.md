@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [Released] - 2025-11-27
+
+## [1.0.1] - 2025-11-27
+
+### Added
+
+- CI workflow to automatically publish new releases to PyPI on tag creation.
 
 ## [1.0.0] - 2025-11-27
 
