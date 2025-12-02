@@ -23,6 +23,11 @@ Documentation = "https://lintdata.patelheet.com"
 Repository = "https://github.com/patelheet30/lintdata"
 Issues = "https://github.com/patelheet30/lintdata/issues"
 
+[project.optional-dependencies]
+joblib = [
+    "joblib>=1.5.2",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
