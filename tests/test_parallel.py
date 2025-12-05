@@ -257,41 +257,41 @@ class TestParallelIntegration:
             }
         )
 
-        report = df.lint.report(parallel=True, format="dict")
+        report = df.lint.report(return_dict=True)
         assert isinstance(report, dict)
-        assert "check_missing_values" in report
+        assert "Missing Values" in report["issues"][0]["check"]
 
     def test_report_with_parallel_false(self):
         """Test report() with parallel=False."""
         df = pd.DataFrame({"A": [1, 2, None, 4, 5], "B": ["a", "b", "c", "d", "e"]})
 
-        report = df.lint.report(parallel=False, format="dict")
+        report = df.lint.report(return_dict=True)
         assert isinstance(report, dict)
 
     def test_report_with_auto_parallel(self):
         """Test report() with automatic parallelisation."""
         # Small DataFrame - should use serial
         small_df = pd.DataFrame({"A": [1, 2, 3]})
-        report = small_df.lint.report(format="dict")
+        report = small_df.lint.report(return_dict=True)
         assert isinstance(report, dict)
 
         # Large DataFrame - should use parallel (if enough cores)
         large_df = pd.DataFrame({"A": range(10000), "B": range(10000)})
-        report = large_df.lint.report(format="dict")
+        report = large_df.lint.report(return_dict=True)
         assert isinstance(report, dict)
 
     def test_report_with_custom_workers(self):
         """Test report() with custom n_jobs."""
         df = pd.DataFrame({"A": range(1000), "B": range(1000)})
 
-        report = df.lint.report(parallel=True, n_jobs=2, format="dict")
+        report = df.lint.report(n_jobs=2, return_dict=True)
         assert isinstance(report, dict)
 
     def test_report_with_threading_backend(self):
         """Test report() with threading backend."""
         df = pd.DataFrame({"A": range(1000), "B": range(1000)})
 
-        report = df.lint.report(parallel=True, backend="threading", format="dict")
+        report = df.lint.report(backend="threading", return_dict=True)
         assert isinstance(report, dict)
 
     @pytest.mark.skipif(not JOBLIB_AVAILABLE, reason="joblib not installed")
@@ -299,5 +299,5 @@ class TestParallelIntegration:
         """Test report() with joblib backend."""
         df = pd.DataFrame({"A": range(1000), "B": range(1000)})
 
-        report = df.lint.report(parallel=True, backend="joblib", format="dict")
+        report = df.lint.report(backend="joblib", return_dict=True)
         assert isinstance(report, dict)
