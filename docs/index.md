@@ -19,7 +19,8 @@ LintData helps data scientists, analysts, and ML engineers identify data quality
 ✅ **Highly Configurable** - Customise thresholds and select specific checks  
 ✅ **Multiple Export Formats** - Text, HTML, JSON, and CSV reports  
 ✅ **Custom Checks API** - Extend with your own validation logic  
-✅ **Pandas Native** - Integrates seamlessly via `.lint` accessor
+✅ **Pandas Native** - Integrates seamlessly via `.lint` accessor  
+✅ **Parallel Execution** - Speed up checks with multiprocessing, threading, or joblib backends
 
 ## Why LintData?
 

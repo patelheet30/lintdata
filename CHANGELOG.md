@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Released] - 2025-11-27
 
+## [1.1.0] - 2025-12-02 - 2025-12-05
+
+### Added
+
+- Add ParallelExecutor for parallel processing with multiprocessing, threading and joblib backends.
+- Added tests for parallel execution in `tests/test_parallel.py`.
+
+### Changed
+
+- Updated `report()` method to include `backend` and `n_jobs` parameters for parallel execution control.
+
 ## [1.0.1] - 2025-11-27
 
 ### Added

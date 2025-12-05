@@ -139,6 +139,18 @@ print(data["issue_count"])  # 4
 print(data["issues"])       # List of issue dicts
 ```
 
+## Parallel Execution
+
+Configure parallel execution to speed up large DataFrame checks:
+
+```python
+# Run checks in parallel
+report = df.lint.report(
+    backend="multiprocessing",
+    n_jobs=4
+)
+```
+
 ## Common Workflows
 
 ### Before Analysis

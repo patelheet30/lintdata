@@ -1,6 +1,6 @@
 [project]
 name = "lintdata"
-version = "1.0.1"
+version = "1.1.0"
 description = "A \"linter\" for pandas DataFrames to automate data quality audits."
 readme = "README.md"
 authors = [{ name = "Heet Patel", email = "heetkpatel30@gmail.com" }]
@@ -22,6 +22,9 @@ Homepage = "https://github.com/patelheet30/lintdata"
 Documentation = "https://lintdata.patelheet.com"
 Repository = "https://github.com/patelheet30/lintdata"
 Issues = "https://github.com/patelheet30/lintdata/issues"
+
+[project.optional-dependencies]
+joblib = ["joblib>=1.5.2"]
 
 [build-system]
 requires = ["hatchling"]
