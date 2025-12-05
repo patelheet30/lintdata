@@ -113,6 +113,18 @@ data = df.lint.report(return_dict=True)
 # }
 ```
 
+### Parallel Execution
+
+You can run checks in parallel by specifying the `backend` and `n_jobs` parameters in the `report()` method.
+
+```python
+report = df.lint.report(
+    checks_to_run=["missing", "duplicates", "outliers"],
+    backend="multiprocessing",  # Options: "multiprocessing", "threading", "joblib"
+    n_jobs=4                    # Number of parallel jobs
+)
+```
+
 ## Usage Examples
 
 ### 1. Run All Checks (Default)

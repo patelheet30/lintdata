@@ -3,17 +3,13 @@
 The `LintAccessor` class provides the `.lint` accessor for pandas DataFrames.
 
 ::: lintdata.accessor.LintAccessor
-    options:
-        show_root_heading: true
-        show_source: false
-        members: 
-            - report 
-            - register_check 
-            - unregister_check 
-            - list_custom_checks
-        group_by_category: true
-        show_signature_annotations: true
-        separate_signature: true
+options:
+show_root_heading: true
+show_source: false
+members: - report - register_check - unregister_check - list_custom_checks
+group_by_category: true
+show_signature_annotations: true
+separate_signature: true
 
 ## Usage Examples
 
@@ -81,6 +77,16 @@ df.lint.register_check(check_email_format)
 report = df.lint.report()
 ```
 
+### Parallel Execution
+
+```python
+# Run checks in parallel
+report = df.lint.report(
+    backend="multiprocessing",
+    n_jobs=4
+)
+```
+
 ### Validation Pipeline
 
 ```python
@@ -131,7 +137,6 @@ result = validate_dataset(df, config)
 - `correlation_threshold` (float): Correlation threshold (default: 0.95)
 - `foreign_key_mappings` (Dict[str, Union[pd.DataFrame, Tuple[pd.DataFrame, str]]]): Referential integrity mappings
 
-
 ### Column-Specific Parameters
 
 - `negative_value_columns` (List[str]): Columns to check for negatives
@@ -143,6 +148,12 @@ result = validate_dataset(df, config)
 - `report_format` (str): Output format - `"text"`, `"html"`, `"json"`, `"csv"`
 - `output` (str): File path to save report
 - `return_dict` (bool): Return structured dictionary
+
+### Parallelisation Parameters
+
+- `backend` (str): Parallel backend - `"joblib"`, `"threading"`, or `"multiprocessing"`. Default: `"multiprocessing"`.
+- `n_jobs` (int): Number of parallel jobs. Default: `-1` (all cores)
+- `min_checks_for_parallel` (int): Minimum checks to trigger automatic parallel execution (default: 3)
 
 ## Design Patterns
 
