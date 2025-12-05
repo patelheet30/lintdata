@@ -5,11 +5,12 @@ Implements the core LintData accessor for pandas Dataframes
 import csv
 import json
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
 from . import checks
+from .parallel import ParallelExecutor
 from .report_formatter import HTMLReportFormatter
 
 __all__ = ["LintAccessor"]
@@ -111,6 +112,9 @@ class LintAccessor:
         report_format: str = "text",
         output: Optional[str] = None,
         return_dict: bool = False,
+        n_jobs: int = 1,
+        backend: str = "multiprocessing",
+        min_checks_for_parallel: int = 3,
     ) -> Union[str, Dict[str, Any]]:
         """Generate a comprehensive quality report for the DataFrame.
 
@@ -141,6 +145,9 @@ class LintAccessor:
             report_format (str, optional): Output format. Options: 'text', 'html', 'json', 'csv'. Defaults to 'text'.
             output (Optional[str], optional): File path to save the report. If None, returns as string. Defaults to None.
             return_dict (bool, optional): If True, returns structured dictionary instead of formatted string. Defaults to False.
+            n_jobs (int, optional): Number of parallel workers. -1: Use all cores, 1: Serial execution, n > 1: Use n workers. Defaults to 1.
+            backend (str, optional): Parallelisation backend. Options: 'multiprocessing', 'threading', 'joblib'. Defaults to 'multiprocessing'.
+            min_checks_for_parallel (int, optional): Minimum number of checks required to trigger parallel execution. Defaults to 3.
 
         Raises:
             ValueError: If invalid check names are provided or invalid format specified.
@@ -165,6 +172,12 @@ class LintAccessor:
 
             >>> # Get structured data
             >>> data = df.lint.report(return_dict=True)
+
+            >>> # Parallel execution with all cores
+            >>> df.lint.report(n_jobs=-1)
+
+            >>> # Parallel execution with specific backend
+            >>> df.lint.report(n_jobs=4, backend='threading')
             ```
         """
         valid_formats = ["text", "html", "json", "csv"]
@@ -182,63 +195,81 @@ class LintAccessor:
                 result = HTMLReportFormatter.generate((0, 0), [])
             elif report_format == "json":
                 result = json.dumps({"shape": [0, 0], "issues": [], "issue_count": 0}, indent=2)
-            else:  # csv
-                result = "check,column,severity,message\n"
+            elif report_format == "csv":
+                from io import StringIO
+
+                output_io = StringIO()
+                writer = csv.writer(output_io)
+                writer.writerow(["check", "column", "severity", "message"])
+                result = output_io.getvalue()
 
             if output:
                 with open(output, "w", encoding="utf-8") as f:
-                    f.write(result)
+                    f.write(result)  # pyright: ignore[reportPossiblyUnboundVariable]
 
-            return result
+            return result  # pyright: ignore[reportPossiblyUnboundVariable]
 
-        if checks_to_run == "all":
-            checks_to_run = None
-        elif isinstance(checks_to_run, str):
-            checks_to_run = [checks_to_run]
+        check_functions: List[Callable] = []
+        check_kwargs: Dict[str, Dict[str, Any]] = {}
 
         available_checks = {
-            "missing": lambda: checks.check_missing_values(self._df),
-            "duplicates": lambda: checks.check_duplicate_rows(self._df),
-            "mixed_types": lambda: checks.check_mixed_types(self._df),
-            "whitespace": lambda: checks.check_whitespace(self._df),
-            "constant": lambda: checks.check_constant_columns(self._df),
-            "unique": lambda: checks.check_unique_columns(self._df, threshold=unique_column_threshold),
-            "outliers": lambda: checks.check_outliers(self._df, threshold=outlier_threshold),
-            "missing_patterns": lambda: checks.check_missing_patterns(self._df),
-            "case": lambda: checks.check_case_consistency(self._df),
-            "cardinality": lambda: checks.check_cardinality(
-                self._df, high_threshold=cardinality_high_threshold, low_threshold=cardinality_low_threshold
+            "missing": (checks.check_missing_values, {}),
+            "duplicates": (checks.check_duplicate_rows, {}),
+            "mixed_types": (checks.check_mixed_types, {}),
+            "whitespace": (checks.check_whitespace, {}),
+            "constant": (checks.check_constant_columns, {}),
+            "unique": (checks.check_unique_columns, {"threshold": unique_column_threshold}),
+            "outliers": (checks.check_outliers, {"threshold": outlier_threshold}),
+            "missing_patterns": (checks.check_missing_patterns, {}),
+            "case": (checks.check_case_consistency, {}),
+            "cardinality": (
+                checks.check_cardinality,
+                {"high_threshold": cardinality_high_threshold, "low_threshold": cardinality_low_threshold},
             ),
-            "skewness": lambda: checks.check_skewness(self._df, threshold=skewness_threshold),
-            "duplicate_columns": lambda: checks.check_duplicate_columns(self._df),
-            "type_consistency": lambda: checks.check_data_type_consistency(self._df),
-            "negative": lambda: checks.check_negative_values(self._df, columns=negative_value_columns),
-            "rare_categories": lambda: checks.check_rare_categories(self._df, threshold=rare_category_threshold),
-            "date_format": lambda: checks.check_date_format_consistency(self._df),
-            "string_length": lambda: checks.check_string_length_outliers(self._df, threshold=string_length_threshold),
-            "zero_inflation": lambda: checks.check_zero_inflation(self._df, threshold=zero_inflation_threshold),
-            "future_dates": lambda: checks.check_future_dates(
-                self._df, columns=future_date_columns, reference_date=future_date_reference
+            "skewness": (checks.check_skewness, {"threshold": skewness_threshold}),
+            "duplicate_columns": (checks.check_duplicate_columns, {}),
+            "type_consistency": (checks.check_data_type_consistency, {}),
+            "negative": (checks.check_negative_values, {"columns": negative_value_columns}),
+            "rare_categories": (checks.check_rare_categories, {"threshold": rare_category_threshold}),
+            "date_format": (checks.check_date_format_consistency, {}),
+            "string_length": (checks.check_string_length_outliers, {"threshold": string_length_threshold}),
+            "zero_inflation": (checks.check_zero_inflation, {"threshold": zero_inflation_threshold}),
+            "future_dates": (
+                checks.check_future_dates,
+                {"columns": future_date_columns, "reference_date": future_date_reference},
             ),
-            "special_chars": lambda: checks.check_special_characters(self._df, threshold=special_chars_threshold),
-            "date_anomalies": lambda: checks.check_date_range_anomalies(
-                self._df, columns=future_date_columns, threshold_years=threshold_years
+            "special_chars": (checks.check_special_characters, {"threshold": special_chars_threshold}),
+            "date_anomalies": (
+                checks.check_date_range_anomalies,
+                {"columns": future_date_columns, "threshold_years": threshold_years},
             ),
-            "correlation": lambda: checks.check_correlation_warnings(self._df, threshold=correlation_threshold),
-            "foreign_keys": lambda: checks.check_referential_integrity(self._df, foreign_key_mappings or {}),
+            "correlation": (checks.check_correlation_warnings, {"threshold": correlation_threshold}),
+            "foreign_keys": (checks.check_referential_integrity, {"foreign_keys": foreign_key_mappings or {}}),
         }
 
         if checks_to_run is None:
-            checks_to_execute = available_checks.keys()
+            checks_to_execute = list(available_checks.keys())
         else:
-            invalid_checks = [c for c in checks_to_run if c not in available_checks]
+            if isinstance(checks_to_run, str) and checks_to_run == "all":
+                checks_to_execute = list(available_checks.keys())
+            else:
+                checks_to_execute = checks_to_run if isinstance(checks_to_run, list) else [checks_to_run]
+
+            invalid_checks = [c for c in checks_to_execute if c not in available_checks]
             if invalid_checks:
                 raise ValueError(f"Invalid check(s): {invalid_checks}. Valid options: {list(available_checks.keys())}")
-            checks_to_execute = checks_to_run
+
+        for check_name in checks_to_execute:
+            func, kwargs = available_checks[check_name]
+            check_functions.append(func)
+            check_kwargs[func.__name__] = kwargs
+
+        executor = ParallelExecutor(n_jobs=n_jobs, backend=backend, min_checks_for_parallel=min_checks_for_parallel)
+        results = executor.execute_checks(check_functions, self._df, check_kwargs)
 
         all_warnings: List[str] = []
-        for check_name in checks_to_execute:
-            all_warnings.extend(available_checks[check_name]())
+        for func in check_functions:
+            all_warnings.extend(results[func.__name__])
 
         for check_name, check_func in self._custom_checks.items():
             try:
@@ -279,7 +310,6 @@ class LintAccessor:
         elif report_format == "csv":
             result = self._format_as_csv(all_warnings)
 
-        # Save to file if output path provided
         if output:
             with open(output, "w", encoding="utf-8") as f:
                 f.write(result)  # pyright: ignore[reportPossiblyUnboundVariable]
